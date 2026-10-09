@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/spicyapi/main/json-schema/spicyapi-open-aimodel-list-schema.json",
+  "title": "OpenAIModelList",
+  "x-generated": "2026-10-09",
+  "x-method": "derived",
+  "x-generator": "derive-json-schema.py",
+  "x-source": "openapi/spicyapi-openapi.yml#/components/schemas/OpenAIModelList",
+  "type": "object",
+  "required": [
+    "object",
+    "data"
+  ],
+  "properties": {
+    "object": {
+      "type": "string",
+      "const": "list"
+    },
+    "data": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "object",
+          "created",
+          "owned_by"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "SpicyAPI model identifier; may contain slashes."
+          },
+          "object": {
+            "type": "string",
+            "const": "model"
+          },
+          "created": {
+            "type": "integer",
+            "description": "Unix seconds of the last catalog update."
+          },
+          "owned_by": {
+            "type": "string",
+            "description": "Model publisher."
+          },
+          "modality": {
+            "type": "string",
+            "enum": [
+              "text",
+              "image",
+              "video",
+              "audio"
+            ],
+            "description": "SpicyAPI extension. Output modality."
+          },
+          "task": {
+            "type": "string",
+            "description": "SpicyAPI extension. The task this identifier runs, for example `chat` or `text-to-video`. Only `chat` models work on the chat, Responses, Messages and Gemini operations."
+          },
+          "context_length": {
+            "type": "integer",
+            "description": "SpicyAPI extension",
+            "chat models only. The most input tokens one request can send.": null
+          },
+          "max_output_tokens": {
+            "type": "integer",
+            "description": "SpicyAPI extension",
+            "chat models only. The largest `max_tokens` value the model accepts.": null
+          },
+          "supported_parameters": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "SpicyAPI extension, chat models only. Request fields this model accepts (the top-level fields of its input schema). `stream`, `stream_options`, `user`, `metadata` and `store` are handled by the compatible layer for every model and are not listed. Any other field returns `400` with `code: unsupported_parameter`."
+          }
+        }
+      }
+    }
+  }
+}

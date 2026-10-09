@@ -1,0 +1,1408 @@
+openapi: 3.2.0
+info:
+  title: Spicyapi Tasks API
+  version: 1.0.0
+  description: 'Operations tagged Tasks across 2 of this provider''s published API definitions: spicyapi-openapi.yaml, spicyapi-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://api.spicyapi.ai
+  description: Production
+security:
+- bearerAuth: []
+tags:
+- name: Tasks
+paths:
+  /api/v1/jobs/quote:
+    post:
+      tags:
+      - Tasks
+      operationId: quoteTask
+      summary: Quote a task before reserving funds
+      description: 'Validates the same model input and admission rules as task creation,
+
+        without creating a task, reserving funds or starting generation.
+
+        The signed quote is bound to this account, API key and request and is
+
+        valid for five minutes. Pass quoteId and expectedCost with the same
+
+        request to createTask or jobs/stream. New acceptance rejects an expired
+
+        or changed quote with business code 40901. A replay of an already
+
+        accepted Idempotency-Key still returns the original task.
+
+        A quote does not reserve capacity or guarantee future availability.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '200':
+          description: Customer price and maximum charge; no funds were reserved.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskQuoteEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+    servers:
+    - url: https://api.spicyapi.ai
+      description: Production
+  /api/v1/jobs/createTask:
+    post:
+      tags:
+      - Tasks
+      operationId: createTask
+      summary: Create an asynchronous generation task
+      description: 'Validates the model input, reserves the estimated charge, chooses an
+
+        available deployment, and creates a task in `queued` state. HTTP 202
+
+        means the task was accepted; it does not mean generation has completed.
+
+
+        An `Idempotency-Key` is optional but strongly recommended. For the same
+
+        account **and the same API key**, repeating a key with the same normalized
+
+        model, input, and callback URL within 24 hours returns the
+
+        original task and does not reserve funds twice. A sibling API key cannot
+
+        replay the mapping: it receives `409 Conflict` without the original task
+
+        ID. Reusing the key with different request semantics also returns
+
+        `409 Conflict`. Callbacks are optional and are validated against
+
+        private/loopback destinations before acceptance.'
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/SpicyRetention'
+      - name: wait
+        in: query
+        required: false
+        description: 'Seconds to hold the connection open waiting for the task to reach a
+
+          terminal state, so you do not have to write a polling loop for the
+
+          first call. Values above 60 are clamped to 60; anything that is not a
+
+          positive integer is ignored rather than rejected, because a typo in an
+
+          optimisation parameter should not fail a generation that would
+
+          otherwise succeed.
+
+
+          Reaching a terminal state within the budget returns `200` with the
+
+          same task record `recordInfo` returns. Running out of budget returns
+
+          the ordinary `202` — identical to omitting `wait` — and you poll from
+
+          there. Disconnecting stops the wait and nothing else: the task keeps
+
+          running and is billed as usual.
+
+
+          The ceiling stays well under the 100-second edge timeout on purpose.
+
+          Past that line the connection is cut by the CDN rather than by us, and
+
+          the caller gets a `524` carrying neither the task ID nor any resumable
+
+          state — while the task exists and the funds are already held.
+
+          '
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 60
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '200':
+          description: Returned only when `wait` was supplied and the task reached a terminal state inside that budget. The body is the task record, identical in shape to `recordInfo`. A terminal state is not necessarily a success - check `data.state`.
+          headers:
+            Cache-Control:
+              description: Task records contain caller-specific state and must not be cached.
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskRecordEnvelope'
+        '202':
+          description: A newly accepted task is returned in `queued` state. A same-key idempotent replay returns the original task in its current state and does not create another hold. The hold is not a charge.
+          headers:
+            Location:
+              description: Relative URL of the task status resource.
+              schema:
+                type: string
+            Retry-After:
+              $ref: '#/components/headers/RetryAfter'
+            Cache-Control:
+              description: Task submissions contain caller-specific state and must not be cached.
+              schema:
+                type: string
+                const: no-store
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTaskEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      callbacks:
+        onTaskTerminal:
+          '{$request.body#/callBackUrl}':
+            post:
+              summary: Deliver a terminal task record
+              description: 'Sent only when `callBackUrl` was supplied. New integrations use
+
+                payload version 2, whose body is the same envelope and task
+
+                record returned by `recordInfo`. Payload version 1 remains a
+
+                compatibility output and is selected by the version header.
+
+
+                Verify `X-Webhook-Signature` over
+
+                `taskId.timestamp.sha256(raw_body)` with HMAC-SHA256 and the
+
+                account webhook key. Select `taskId` from top-level `task_id`
+
+                for payload v1 and from `data.taskId` for payload v2, then
+
+                compare the Base64-encoded result in constant time.
+
+                Reject stale timestamps. A delivery may be retried and receivers
+
+                must be idempotent; in v2, `request_id` is the stable delivery ID.
+
+                '
+              parameters:
+              - name: X-Webhook-Timestamp
+                in: header
+                required: true
+                schema:
+                  type: string
+                  pattern: ^[0-9]+$
+                description: Unix timestamp used by the signature.
+              - name: X-Webhook-Signature
+                in: header
+                required: true
+                schema:
+                  type: string
+                description: Base64-encoded HMAC-SHA256 signature.
+              - name: X-Webhook-Payload-Version
+                in: header
+                required: true
+                schema:
+                  type: integer
+                  enum:
+                  - 1
+                  - 2
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      oneOf:
+                      - $ref: '#/components/schemas/TaskRecordEnvelope'
+                      - $ref: '#/components/schemas/LegacyWebhookPayload'
+              responses:
+                '200':
+                  description: Any 2xx response acknowledges delivery.
+    servers:
+    - url: https://api.spicyapi.ai
+      description: Production
+  /api/v1/jobs/recordInfo:
+    get:
+      tags:
+      - Tasks
+      operationId: recordInfo
+      summary: Get a task created by the authenticated API key
+      parameters:
+      - name: taskId
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      responses:
+        '200':
+          description: Current task record. Terminal and non-terminal states share this shape.
+          headers:
+            Cache-Control:
+              description: Task state is caller-specific and changes asynchronously.
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskRecordEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Task does not exist or belongs to another account or API key; these cases are indistinguishable.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    servers:
+    - url: https://api.spicyapi.ai
+      description: Production
+  /api/v1/jobs/stream:
+    post:
+      tags:
+      - Tasks
+      operationId: streamTask
+      summary: Run a text model and stream the answer
+      description: 'Text models only. Applies the same validation, quota, pricing and hold as
+
+        `createTask`, then keeps the connection open and returns the model answer
+
+        as a Server-Sent Events stream. Each event is a `data:` line carrying one
+
+        JSON chunk; the stream ends with `data: [DONE]`.
+
+
+        The hold is settled when the stream completes. If generation fails
+
+        within the first few seconds, before anything has been sent, the response
+
+        is a normal JSON error and the hold is released. While a long reasoning
+
+        model has not produced anything yet, and whenever the stream goes quiet,
+
+        the connection carries SSE comment lines (`: keep-alive`) so the network
+
+        edge does not close it as idle; clients must ignore them, as the SSE
+
+        format requires. A failure after that point, or mid-stream, ends the
+
+        stream with an `error` event and the hold is still released — a truncated
+
+        answer is never charged as a completed one. The reverse also holds: when
+
+        the model has already finished the answer (every choice has a
+
+        `finish_reason` and the final usage has arrived) and only then reports an
+
+        error or drops the connection, the answer is complete, the stream ends
+
+        with `[DONE]` as usual, and the delivered usage is charged.
+
+
+        Non-streaming calls to the compatible endpoints are kept open too. A
+
+        call that finishes within about 30 seconds is answered exactly as
+
+        before. A longer one commits a `200` response with
+
+        `Content-Type: application/json` and the `X-Spicy-Keepalive: 1` header
+
+        after about 30 seconds, then sends a newline every 15 seconds until the
+
+        answer is ready; JSON allows leading whitespace, so standard parsers
+
+        read the body unchanged. Because the status is already sent, a failure
+
+        after that point arrives as the protocol''s own error object in the body
+
+        of the `200` response, with the same code and message it would
+
+        otherwise have had, and the hold is still released. The whitespace is
+
+        not model output: disconnecting after it follows the usual disconnect
+
+        rules, and an answer that ends up empty or refused is still refunded.
+
+
+        Generation models (image, video, audio) are asynchronous and must use
+
+        `createTask` with `recordInfo` polling; calling this endpoint for them
+
+        returns `503`.'
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/SpicyRetention'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '200':
+          description: Server-Sent Events stream of the model answer.
+          headers:
+            X-Spicy-Task-Id:
+              $ref: '#/components/headers/SpicyTaskId'
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+    servers:
+    - url: https://api.spicyapi.ai
+      description: Production
+  /api/v1/jobs/retry:
+    post:
+      tags:
+      - Tasks
+      operationId: retryTask
+      summary: Create a new task from a failed or expired task
+      description: 'The source terminal task is never modified. Current model schema,
+
+        pricing, permissions, balance, and availability are evaluated again. An
+
+        optional Idempotency-Key is scoped to the source task and retry action.
+
+        The source task must have been created by the same API key; unknown,
+
+        cross-account, and same-account cross-key task IDs all return 404.'
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskActionRequest'
+      responses:
+        '200':
+          description: A newly created retry task is returned in `queued` state. An idempotent replay returns that retry task in its current state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetryTaskEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+    servers:
+    - url: https://api.spicyapi.ai
+      description: Production
+  /api/v1/jobs/purge:
+    post:
+      tags:
+      - Tasks
+      operationId: purgeTask
+      summary: Destroy the stored content of a finished task
+      description: 'Removes the task''s generated media objects, its result payload, and the
+
+        stored request text including the prompt.
+
+
+        **Billing evidence is never touched.** The ledger, the charged amount,
+
+        the model identifier, the state, the timestamps and the request_id all
+
+        remain, so the task stays fully auditable in billing. What is destroyed
+
+        is the content, not the spend record; the response repeats this as
+
+        `billingRetained`.
+
+
+        Only a finished task can be destroyed; a task that is still queued or
+
+        running returns 400. Its outputs have not landed yet, and removing half
+
+        of them is worse than removing none. An accepted generation task cannot
+
+        be stopped, so the only thing to do is wait for it to reach a terminal
+
+        state and call this endpoint then.
+
+
+        The call is idempotent by `taskId`: destroying an already destroyed task
+
+        returns 200 with the original `purgedAt`, so a client may safely retry
+
+        after a timeout. This endpoint does not read an `Idempotency-Key` header;
+
+        the `taskId` itself is the idempotency key.
+
+
+        Media objects are removed by a background sweep within about a minute,
+
+        so `mediaDeletionPending` can be true while `contentState` is already
+
+        `purged`. Deleting them inline would let one undeletable object block the
+
+        whole request.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskActionRequest'
+      responses:
+        '200':
+          description: Content destroyed, or already destroyed by an earlier call.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskPurgeEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    servers:
+    - url: https://api.spicyapi.ai
+      description: Production
+  /api/v1/jobs:
+    get:
+      tags:
+      - Tasks
+      operationId: listTasks
+      summary: List task history for the authenticated API key
+      description: 'Returns only visible tasks created by this API key, newest first by
+
+        createdAt and taskId. Scope is this API key: tasks created by other keys on the same account, and generations started directly in the web console (which use no API key), are not included. For an account-wide view, use the console''s usage page. The list contains metadata only;
+
+        use recordInfo for a selected task''s result. No input, output, signed
+
+        media URL, or internal processing detail is included.
+
+        Dates form a UTC half-open interval [from,to), up to 92 days.
+
+        Default to is tomorrow in UTC; omitted from is seven days before to.
+
+        Keep all filters, including explicit from/to dates, unchanged while
+
+        paginating with nextCursor. Pages read live state, not a frozen snapshot.
+
+        Unknown, duplicate, or empty query parameters are rejected. Queries
+
+        have a five-second server budget and return 503 on timeout.'
+      parameters:
+      - name: from
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Inclusive UTC date in YYYY-MM-DD format.
+      - name: to
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Exclusive UTC date in YYYY-MM-DD format.
+      - name: state
+        in: query
+        schema:
+          type: string
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+          - canceled
+          - expired
+      - name: model
+        in: query
+        schema:
+          type: string
+        description: Exact catalog model identifier or a declared alias.
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: cursor
+        in: query
+        schema:
+          type: string
+        description: Opaque nextCursor from the previous page; do not construct it yourself.
+      responses:
+        '200':
+          description: Current-key task summaries without prompt or result payloads.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKeyTaskListEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+    servers:
+    - url: https://api.spicyapi.ai
+      description: Production
+components:
+  schemas:
+    RetryTaskResponse:
+      allOf:
+      - $ref: '#/components/schemas/CreateTaskResponse'
+      - type: object
+        required:
+        - sourceTaskId
+        properties:
+          sourceTaskId:
+            type: string
+    TaskTranscript:
+      type: object
+      description: Structured transcription result, present only on speech-to-text endpoints that return it. `text` above stays the plain transcript; this object adds timing and language details. Erased together with the rest of the task output on the prompt-retention schedule.
+      properties:
+        text:
+          type: string
+          description: Full transcript.
+        language:
+          type: string
+          description: Detected language, as reported by the model (for example en).
+        languageCode:
+          type: string
+          description: Detected language code (ISO 639-3, for example eng) when available.
+        languageProbability:
+          type: number
+          description: Confidence of the detected language
+          0 to 1: null
+          when available.: null
+        durationSeconds:
+          type: number
+          description: Length of the transcribed audio in seconds.
+        words:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskTranscriptWord'
+        channels:
+          type: array
+          description: Present when multichannel transcription was requested; one entry per audio channel.
+          items:
+            $ref: '#/components/schemas/TaskTranscriptChannel'
+    TaskPurgeEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          code:
+            type: integer
+            const: 200
+          msg:
+            type: string
+            const: success
+          data:
+            $ref: '#/components/schemas/TaskPurgeResponse'
+    TaskRecord:
+      type: object
+      required:
+      - taskId
+      - model
+      - state
+      - cost
+      - settled
+      - createdAt
+      properties:
+        taskId:
+          type: string
+        sourceTaskId:
+          type: string
+          description: Present when this task was created by explicit retry.
+        model:
+          type: string
+        state:
+          type: string
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+          - canceled
+          - expired
+        input:
+          description: Normalized model input; inline images become account-bound file URIs. Includes the random `seed` we picked when you omitted one (see CreateTaskRequest.input). Omitted after retention redaction.
+          type: object
+          additionalProperties: true
+        output:
+          $ref: '#/components/schemas/TaskOutput'
+        errorCode:
+          type: string
+          description: 'Stable SpicyAPI failure identifier from a closed set; never an internal diagnostic code. The set is closed: any other value a client sees should be handled as `upstream_failed`.'
+          enum:
+          - invalid_request
+          - unsupported_combination
+          - content_rejected
+          - rate_limited
+          - upstream_unavailable
+          - generation_failed
+          - timeout
+          - invalid_asset
+          - upstream_failed
+        errorMessage:
+          type: string
+          description: Human-readable failure reason. When the model service reported a specific reason (for example a corrupted reference image or a copyright restriction on generated audio), that reason is returned in English with internal service names, hosts, URLs, request and task IDs, error-code suffixes and account or billing details removed; otherwise a normalized message that follows the same language selection as `msg`. `errorCode` never changes and remains the value to branch on.
+        cost:
+          $ref: '#/components/schemas/USDString'
+        settled:
+          type: boolean
+          description: When false, `cost` is the held estimate. When true, `cost` is the final charge. On success the final charge is capped at that hold; unused funds are released. Failed or expired tasks normally release the hold in full; the one exception is a `content_rejected` task on a model whose page states that such refusals are billed, which is settled at the accepted estimate.
+        billingRoute:
+          type: string
+          enum:
+          - economy
+          - official
+          description: 'Present only for models with an economy route, once billing settled a charge for the task: every succeeded task (even when the final charge is zero) and a `content_rejected` task settled at the accepted estimate under the model''s stated refusal billing. `economy`: the economy route ran it and the economy price applied. `official`: the official fallback ran it and the official price applied. Omitted while unsettled, for tasks whose hold was released in full (failed, expired) and for every other model.'
+        createdAt:
+          type: string
+          format: date-time
+        deadlineAt:
+          type: string
+          format: date-time
+          description: Server execution deadline. Present in current responses; historical stored webhook events may omit it. Not the result retention or URL expiry time.
+        completedAt:
+          type: string
+          format: date-time
+        contentState:
+          type: string
+          enum:
+          - present
+          - expired
+          - purged
+          description: 'Whether the task content is still stored, and why it is not. `expired` means the retention policy removed it; `purged` means the account owner destroyed it with `purgeTask`. The two are deliberately distinct: telling a customer their own deletion was an expiry reads as the platform losing their data.'
+        contentRemovedBy:
+          type: string
+          enum:
+          - user
+          - system
+          description: Present only once content has been removed. Omitted while `contentState` is `present`.
+        purgedAt:
+          type: string
+          format: date-time
+          description: Present only for a task destroyed with `purgeTask`. Expiry does not set it.
+        retention:
+          $ref: '#/components/schemas/TaskRetention'
+    USDString:
+      type: string
+      pattern: ^-?[0-9]+(?:\.[0-9]+)?$
+      description: Decimal USD amount encoded as a string to avoid binary floating-point loss.
+    APIKeyTaskListEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          code:
+            type: integer
+            const: 200
+          msg:
+            type: string
+            const: success
+          data:
+            $ref: '#/components/schemas/APIKeyTaskListResponse'
+    LegacyWebhookPayload:
+      type: object
+      deprecated: true
+      description: Version 1 compatibility callback. New integrations must use version 2.
+      required:
+      - task_id
+      - model
+      - state
+      - cost
+      - created_at
+      properties:
+        task_id:
+          type: string
+        model:
+          type: string
+        state:
+          type: string
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+          - canceled
+          - expired
+        output:
+          type: object
+          additionalProperties: true
+        error_code:
+          type: string
+        error_message:
+          type: string
+        cost:
+          $ref: '#/components/schemas/USDString'
+        created_at:
+          type: string
+          format: date-time
+    RetryTaskEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          code:
+            type: integer
+            const: 200
+          msg:
+            type: string
+            const: success
+          data:
+            $ref: '#/components/schemas/RetryTaskResponse'
+    APIKeyTaskListResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - hasMore
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/APIKeyTaskItem'
+        hasMore:
+          type: boolean
+        nextCursor:
+          type: string
+          description: Present only when hasMore is true.
+    TaskOutput:
+      type: object
+      additionalProperties: true
+      description: First-party result metadata. Ready assets include directly usable temporary URLs; no download-ticket request is needed. Poll again to refresh an expired URL. Temporary URLs are bearer access grants; never attach your API key when fetching them.
+      properties:
+        text:
+          type: string
+          description: Text result (chat
+          transcription). For transcription with multichannel on: null
+          one line per channel in channel order.: null
+        transcript:
+          $ref: '#/components/schemas/TaskTranscript'
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskOutputAsset'
+    TaskPurgeResponse:
+      type: object
+      required:
+      - taskId
+      - contentState
+      - billingRetained
+      - mediaDeletionPending
+      properties:
+        taskId:
+          type: string
+        contentState:
+          type: string
+          enum:
+          - present
+          - expired
+          - purged
+          description: '`purged` after a successful destroy, and on any idempotent repeat. Still `present` means this call removed nothing and may be retried later; the reason is deliberately not disclosed.'
+        purgedAt:
+          type: string
+          format: date-time
+          description: Time of the **first** destroy, not of this call.
+        contentRemovedBy:
+          type: string
+          enum:
+          - user
+          - system
+          description: Omitted while `contentState` is `present`.
+        billingRetained:
+          type: boolean
+          const: true
+          description: Always true. Destroying content never changes the ledger, the charged amount, or any other billing fact. It is stated explicitly because it is the one thing a caller is likely to get wrong about an endpoint named "purge".
+        mediaDeletionPending:
+          type: boolean
+          description: True while the background sweep has not finished removing the stored media objects.
+    EnvelopeBase:
+      type: object
+      required:
+      - code
+      - msg
+      - request_id
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+        request_id:
+          type: string
+          description: Correlation identifier. Include it in support requests.
+    TaskRetention:
+      type: object
+      description: When this task's content is scheduled to be removed, and which layer decided it. Omitted for tasks created before per-task retention existed; those follow the platform maximum.
+      required:
+      - outputsExpireAt
+      - promptsExpireAt
+      - source
+      properties:
+        outputsExpireAt:
+          type: string
+          format: date-time
+          description: When the generated media objects and the result payload are removed. Before the task finishes this is measured from acceptance; when the task reaches a terminal state it is re-based on the completion time using the same window, so it only ever moves later, never earlier.
+        promptsExpireAt:
+          type: string
+          format: date-time
+          description: When the stored request text is erased. The task row, its state, amounts and request_id remain.
+        source:
+          type: string
+          enum:
+          - header
+          - account
+          - platform
+          description: 'Which layer actually constrained the value: the per-request `X-Spicy-Retention` header, the account setting, or the platform maximum. A request that sends the header and still sees `account` has an account setting that is already shorter than it asked for.'
+    ErrorEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        properties:
+          code:
+            type: integer
+            enum:
+            - 400
+            - 40003
+            - 40004
+            - 401
+            - 40201
+            - 40202
+            - 403
+            - 40301
+            - 40302
+            - 40303
+            - 40310
+            - 404
+            - 409
+            - 40901
+            - 413
+            - 429
+            - 500
+            - 503
+            - 50301
+            - 50302
+            description: 'Business code. `40003`: an uploaded file''s actual size, media type or signature does not match its upload ticket (file commit). `40004`: the request is valid but no deployment can serve this exact parameter combination; change the named parameter and retry. `503`: a dependency is temporarily unavailable (for example a list or usage query timed out, or inline image storage failed); honour `Retry-After` when present. `50301`: the model has no usable deployment or effective price right now. `50302`: a synchronous generation (streaming) failed upstream and the charge was refunded. Retry with a **new** `Idempotency-Key` — the original key replays the same failure, so a transport-level retry that keeps the key can never succeed. `40301`: this key is not allowed to call this model — check the key''s model restrictions in the Console. `40302`: the caller''s address is not in this key''s IP allow-list. `40303`: the request comes from a region this service is not offered in; the message deliberately does not state how that is determined, and neither does this description. `40310`: the account has not verified its email address yet, so it cannot run models. Open the verification link that was emailed at sign-up, or send a new one from the Console; the key starts working as soon as the address is verified, with no change on your side.'
+          msg:
+            type: string
+            description: Human-readable explanation, English unless `Accept-Language` or the account's API error language selects another supported language. Never parse it; branch on `code`.
+    APIKeyTaskItem:
+      type: object
+      additionalProperties: false
+      required:
+      - taskId
+      - model
+      - state
+      - cost
+      - settled
+      - createdAt
+      - deadlineAt
+      properties:
+        taskId:
+          type: string
+        requestId:
+          type: string
+          description: The `X-Request-Id` of the request that created this task. Synchronous text calls (`/v1/chat/completions`, `/v1/messages`, `/v1/responses`, Gemini, `/api/v1/jobs/stream`) can be matched to their task with it, or with the `X-Spicy-Task-Id` response header. Omitted when no request id was recorded.
+        model:
+          type: string
+          description: Public model identifier.
+        state:
+          type: string
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+          - canceled
+          - expired
+        cost:
+          allOf:
+          - $ref: '#/components/schemas/USDString'
+          description: Final charged USD if settled; otherwise the current held estimate.
+        settled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        deadlineAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+    TaskQuoteEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          data:
+            $ref: '#/components/schemas/TaskQuoteResponse'
+    TaskQuoteResponse:
+      type: object
+      required:
+      - quoteId
+      - model
+      - estimatedCost
+      - maxCharge
+      - currency
+      - quantity
+      - unit
+      - expiresAt
+      additionalProperties: false
+      properties:
+        quoteId:
+          type: string
+        model:
+          type: string
+          description: Resolved endpoint model identifier.
+        estimatedCost:
+          $ref: '#/components/schemas/USDString'
+        maxCharge:
+          $ref: '#/components/schemas/USDString'
+        currency:
+          type: string
+          const: USD
+        quantity:
+          type: string
+          description: Estimated billable quantity.
+        unit:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        expectedCharge:
+          allOf:
+          - $ref: '#/components/schemas/USDString'
+          description: Present only for models with an economy route (`official_fallback`). What you are charged when the economy route produces the result. `estimatedCost` and `maxCharge` remain the amount held, which is the most you can be charged with the official fallback allowed.
+        billingRoutes:
+          type: array
+          items:
+            type: string
+            enum:
+            - economy
+            - official
+          description: Present only for models with an economy route. The routes this request can be billed at, economy first. `[economy]` when `official_fallback` is `false`; `[official]` when the request uses an option only the official route supports.
+    TaskOutputAsset:
+      type: object
+      additionalProperties: true
+      properties:
+        key:
+          type: string
+          description: Compatibility identifier for optional download-url requests.
+        url:
+          type: string
+          format: uri
+          description: First-party signed GET URL
+          normally valid for 20 minutes and never beyond the 14-day result retention period. Absent while pending or unavailable.: null
+        expiresAt:
+          type: string
+          format: date-time
+          description: Expiry of this URL
+          not the result retention deadline.: null
+        mime:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        durationSeconds:
+          type: number
+        bytes:
+          type: integer
+          format: int64
+        role:
+          type: string
+        nsfw:
+          type: boolean
+        pending:
+          type: boolean
+        unavailable:
+          type: boolean
+        layer:
+          type: object
+          description: Present only on layer decomposition results. The first asset is the base image (the source with the separated elements removed, `zIndex` 0); every other asset is one transparent PNG layer. Stack them by ascending `zIndex` to rebuild the picture. `boundingBox` is `[x1, y1, x2, y2]` in base-image pixels and places the layer on the base (scale the layer to that box); it is absent on the base image and on models that do not report positions, in which case the layers can still be used as standalone cut-outs. `name` is the model's label for the layer when it gives one.
+          required:
+          - zIndex
+          properties:
+            zIndex:
+              type: integer
+              minimum: 0
+            name:
+              type: string
+            boundingBox:
+              type: array
+              minItems: 4
+              maxItems: 4
+              items:
+                type: integer
+                minimum: 0
+    TaskTranscriptChannel:
+      type: object
+      required:
+      - index
+      properties:
+        index:
+          type: integer
+          description: Zero-based channel index.
+        text:
+          type: string
+        language:
+          type: string
+        languageCode:
+          type: string
+        words:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskTranscriptWord'
+    TaskTranscriptWord:
+      type: object
+      required:
+      - text
+      - start
+      - end
+      properties:
+        text:
+          type: string
+        start:
+          type: number
+          description: Start time in seconds from the beginning of the audio.
+        end:
+          type: number
+          description: End time in seconds.
+        type:
+          type: string
+          description: Segment type (for example word) when the model reports one.
+        speakerId:
+          type: string
+          description: Speaker label; only present when the model performs speaker separation.
+    CreateTaskEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          code:
+            type: integer
+            const: 200
+          msg:
+            type: string
+            const: success
+          data:
+            $ref: '#/components/schemas/CreateTaskResponse'
+    CreateTaskRequest:
+      type: object
+      required:
+      - model
+      - input
+      additionalProperties: false
+      properties:
+        model:
+          type: string
+          minLength: 1
+          description: Exact `model` value from the model catalog.
+        input:
+          type: object
+          description: 'Validated against the selected model''s inputSchema. Declared image fields accept public HTTPS URLs, committed spicy:// file URIs, your own persona images as spicy://p/<assetId> (created in the console; usable only with API keys you created in your personal workspace, so team workspace keys, another account''s id and an unknown id all get the same rejection, and persona images are refused in video, audio and file fields), or standard Base64 Data URIs (image/jpeg, image/png, image/webp, image/gif). Inline images are limited to 1048576 decoded bytes and 8388608 pixels each, 8192 pixels per side, and 16 images / 16777216 pixels in total. The complete JSON request must fit within 2097152 bytes. Model-specific limits still apply. Bare Base64, SVG and inline audio/video are not accepted; use HTTPS or file uploads instead. Inline images are stored as account-bound uploaded files; returned input contains file URIs, never the original Base64 bytes. Quote validation does not upload or reserve funds. If the model''s inputSchema declares `seed` and you omit it, we pick a random seed for this task, so two identical requests do not come back with the same output. The chosen seed is returned in the task''s `input`; pass it back to hold the draw steady (a fixed seed keeps runs comparable, it does not guarantee an identical result). On the few models that cannot honour `seed` on every request, we still vary it where it applies but do not echo it. A `seed` you send yourself is always used as given. Models that offer an economy route declare the boolean `official_fallback` (default `true`): the request runs on the economy route first and, if that fails and the field is `true`, is retried once on the official route. The hold is the highest price the request can be billed at (the official price while the fallback is allowed); you are billed the price of the route that actually produced the result and the rest of the hold is released. With `false`, only the economy route is tried and the hold is the economy price.'
+          additionalProperties: true
+        callBackUrl:
+          type: string
+          format: uri
+          description: 'Optional public HTTPS endpoint for terminal task delivery. `http://` URLs are rejected: the delivery carries the prompt and signed result links. Explicit ports other than 443 and 80 are rejected, and URL credentials are rejected. The hostname must resolve to public IP addresses and is checked again when connecting. Invalid values return HTTP 400 with code 400, msg "Invalid callback URL", and request_id.'
+        quoteId:
+          type: string
+          maxLength: 4096
+          description: Signed quote returned by jobs/quote for this same account, API key and request. Does not replace Idempotency-Key.
+        expectedCost:
+          allOf:
+          - $ref: '#/components/schemas/USDString'
+          description: Confirmed amount to reserve, with up to nine decimal places. A changed price returns business code 40901 before reservation.
+    CreateTaskResponse:
+      type: object
+      required:
+      - taskId
+      - state
+      - estimatedCost
+      - deadlineAt
+      properties:
+        taskId:
+          type: string
+        deadlineAt:
+          type: string
+          format: date-time
+          description: Server execution deadline fixed at acceptance; not a local wait timeout or result URL expiry. Idempotent replays retain the original deadline.
+        state:
+          type: string
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+          - canceled
+          - expired
+          description: '`queued` for a new submission; an idempotent replay reports the original task''s current state.'
+        estimatedCost:
+          allOf:
+          - $ref: '#/components/schemas/USDString'
+          description: Funds held when the task is accepted and the maximum customer charge for that task. Unused funds are released and no later amount is collected above the hold.
+    TaskRecordEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          code:
+            type: integer
+            const: 200
+          msg:
+            type: string
+            const: success
+          data:
+            $ref: '#/components/schemas/TaskRecord'
+    TaskActionRequest:
+      type: object
+      required:
+      - taskId
+      additionalProperties: false
+      properties:
+        taskId:
+          type: string
+          minLength: 1
+  parameters:
+    SpicyRetention:
+      name: X-Spicy-Retention
+      in: header
+      required: false
+      description: 'Retention for this one task, in whole seconds. It applies to both the generated outputs and the stored request text. The effective value is always `min(header, account setting, platform maximum)`: a request can only shorten retention, never extend it.
+
+        `0` is valid and means the outputs are removed as soon as the task reaches a terminal state. Values that cannot be applied never fail the request: a negative number is clamped to `0`, a value above the ceiling is clamped to the ceiling, and a value that is not a decimal integer is ignored so the account setting applies. The effective result is always reported back in `retention` on the task record.
+
+        Accepted by `createTask` and `stream`. `retry` inherits the source task''s effective value and ignores this header, so one task family never ends up with two different expiry times. `quote` does not accept it because it does not create a task.'
+      schema:
+        type: string
+        pattern: ^-?[0-9]+$
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: Stable key for one logical task submission; retained for 24 hours per account and bound to both the submitting API key and normalized request fingerprint. A sibling key receives 409 without the original task ID.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+  headers:
+    SpicyTaskId:
+      description: The SpicyAPI task (`job_…`) that ran this synchronous text request — the same `taskId` that `GET /api/v1/jobs` and `recordInfo` return, so a call can be matched to its charge. Set as soon as the request is accepted, including on error responses returned after acceptance (the task shows the refund). Absent when the request was rejected before a task was created (for example a validation error), and on a streamed response whose headers were already flushed by a keep-alive before acceptance.
+      schema:
+        type: string
+    RateLimitRemaining:
+      description: Remaining requests in the active window.
+      schema:
+        type: integer
+    RateLimitLimit:
+      description: Capacity of the active account-level rate-limit window.
+      schema:
+        type: integer
+    RetryAfter:
+      description: Seconds to wait before retrying.
+      schema:
+        type: integer
+        minimum: 1
+  responses:
+    PayloadTooLarge:
+      description: Request body exceeds the server's accepted size limit.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Unauthorized:
+      description: Missing, malformed, expired, revoked, or otherwise invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    BadRequest:
+      description: Invalid JSON, query, callback URL, model input, or media declaration. Invalid callBackUrl values return code 400 and msg "Invalid callback URL" with request_id. Submitted hosts, IP addresses, and DNS diagnostics are not echoed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    PaymentRequired:
+      description: Insufficient balance (`40201`) or a spend cap was reached (`40202`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Conflict:
+      description: Idempotency or media-transfer state conflicts with this request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    RateLimited:
+      description: Account-level request limit exceeded.
+      headers:
+        X-RateLimit-Limit:
+          $ref: '#/components/headers/RateLimitLimit'
+        X-RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimitRemaining'
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Unavailable:
+      description: 'HTTP 503 carries one of three business codes. `50301`: no usable deployment or effective customer price exists for the selected model. `503`: a dependency is temporarily unavailable; retry after the `Retry-After` header when it is present. `50302`: a synchronous generation failed upstream and the charge was refunded. Nothing was charged, but send the retry with a **new** `Idempotency-Key`: reusing the original one replays the recorded failure instead of generating again.'
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ServerError:
+      description: Internal failure. Details are not exposed; report `request_id` to support.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Forbidden:
+      description: Account, model, API-key, IP, or region authorization failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    NotFound:
+      description: Resource does not exist or is not visible to this account and API key. These cases are intentionally indistinguishable.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: sk-spicy-<48 lowercase hex characters>
+      description: 'Send `Authorization: Bearer sk-spicy-...`. Keep keys server-side.'
+x-refined-from:
+- spicyapi-openapi.yaml
+- spicyapi-openapi.yml

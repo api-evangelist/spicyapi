@@ -1,0 +1,20 @@
+name: SpicyAPI Packages
+generated: '2026-10-09'
+method: searched
+source: https://docs.spicyapi.ai/docs/sdk
+packages:
+- name: '@spicyapi/sdk'
+  registry: npm
+  url: https://www.npmjs.com/package/@spicyapi/sdk
+  language: TypeScript
+  official: true
+  version: 0.8.0
+  published: '2026-10-05'
+- name: '@spicyapi/mcp'
+  registry: npm
+  url: https://www.npmjs.com/package/@spicyapi/mcp
+  language: TypeScript
+  official: true
+  version: 0.5.0
+  published: '2026-10-05'
+note: Docs also publish Python, Go, PHP and Java SDK pages (docs.spicyapi.ai/docs/sdk-python, sdk-go, sdk-php, sdk-java); their registry versions were not checked in this pass.

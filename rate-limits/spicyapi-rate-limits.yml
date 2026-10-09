@@ -1,0 +1,26 @@
+name: SpicyAPI Rate Limits
+generated: '2026-10-09'
+method: searched
+source: https://docs.spicyapi.ai/docs/limits
+limits:
+- name: Requests per account
+  limit_text: 1,000 per 10 seconds for reads, the same again for writes
+  max: 1000
+  window: 10 seconds
+  scope: per-account
+- name: Upload URL requests
+  limit_text: 1,000 per 10 seconds
+  max: 1000
+  window: 10 seconds
+  scope: per-account
+- name: Upload URLs requested but not yet used
+  limit_text: 128 files or 1 GiB
+  scope: per-account
+- name: Usage report
+  limit_text: 30 per minute; 92-day range
+  max: 30
+  window: 1 minute
+  scope: per-account
+  endpoint: getUsage
+headers: [X-RateLimit-Limit, X-RateLimit-Remaining, Retry-After]
+exhaustion_status: 429

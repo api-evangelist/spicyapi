@@ -1,28 +1,230 @@
 aid: spicyapi
 name: SpicyAPI
-description: 'SpicyAPI is a company surfaced via the API Evangelist harvest backlog (source: new-submission)
-  and added to the network as a stub for full-pipeline profiling.'
+image: https://spicyapi.ai/opengraph-image
+description: SpicyAPI is a pay-as-you-go aggregator for generative media and chat models. One API key reaches image, video, audio and LLM models through an async jobs API (quote, create task, poll, stream, retry) plus OpenAI-, Anthropic- and Gemini-compatible endpoints (chat completions, responses, messages, generateContent, videos), with a model catalog, usage and credit endpoints, signed upload/download URLs, webhooks and first-party SDKs.
 url: https://raw.githubusercontent.com/api-evangelist/spicyapi/refs/heads/main/apis.yml
 x-type: company
 x-source: harvest:new-submission
-x-tier: stub
-x-tier-reason: harvest
+x-tier: profiled
+x-tier-reason: enrichment pass 2026-10-09 (local-v5; was harvest)
 specificationVersion: '0.20'
 created: '2026-10-09'
 modified: '2026-10-09'
 tags:
 - Company
-apis: []
+- Artificial Intelligence
+- Generative Media
+- LLM
+- Video Generation
+- Image Generation
+- Model Aggregator
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: Security
+  url: https://spicyapi.ai/legal/reporting
+- type: AgenticAccess
+  url: agentic-access/spicyapi-agentic-access.yml
+- type: RateLimits
+  url: rate-limits/spicyapi-rate-limits.yml
+- type: Plans
+  url: plans/spicyapi-plans-pricing.yml
+- type: Spectral
+  url: rules/spicyapi-rules.yml
+- type: JSONLD
+  url: json-ld/spicyapi-context.jsonld
+- type: Vocabulary
+  url: vocabulary/spicyapi-vocabulary.yml
+- type: Webhooks
+  url: asyncapi/spicyapi-webhooks.yml
+- type: DataModel
+  url: data-model/spicyapi-data-model.yml
+- type: Idempotency
+  url: conventions/spicyapi-conventions.yml
+- type: Conventions
+  url: conventions/spicyapi-conventions.yml
+- type: ErrorCatalog
+  url: errors/spicyapi-problem-types.yml
+- type: Conformance
+  url: conformance/spicyapi-conformance.yml
+- type: LLMsTxt
+  url: llms/spicyapi-llms.txt
+- type: MCPServer
+  url: mcp/spicyapi-mcp.yml
+- type: SecurityTxt
+  url: well-known/spicyapi-security.txt
+- type: WellKnown
+  url: well-known/spicyapi-well-known.yml
+- type: Hosts
+  url: hosts/spicyapi-hosts.yml
+- type: Vendors
+  url: vendors/spicyapi-vendors.yml
+- type: Packages
+  url: packages/spicyapi-packages.yml
+- type: TrustCenter
+  url: https://spicyapi.ai/trust
+- type: Sandbox
+  url: https://spicyapi.ai/console
+- type: SDKs
+  url: https://www.npmjs.com/package/@spicyapi/sdk
+- type: Authentication
+  url: authentication/spicyapi-authentication.yml
+- type: VulnerabilityDisclosure
+  url: security/spicyapi-vulnerability-disclosure.yml
+- type: DomainSecurity
+  url: security/spicyapi-domain-security.yml
 - type: Website
   url: https://spicyapi.ai
 - type: Documentation
   url: https://docs.spicyapi.ai
+- type: APIReference
+  url: https://docs.spicyapi.ai/docs/api-reference
+- type: Blog
+  url: https://spicyapi.ai/blog
+- type: ChangeLog
+  url: https://spicyapi.ai/changelog
+- type: DeveloperPortal
+  url: https://spicyapi.ai/developers
+- type: GettingStarted
+  url: https://docs.spicyapi.ai/docs
+- type: GitHubOrganization
+  url: https://github.com/spicyapi-ai
+- type: Login
+  url: https://spicyapi.ai/login
+- type: SignUp
+  url: https://spicyapi.ai/register
+- type: Pricing
+  url: https://spicyapi.ai/pricing
+- type: PrivacyPolicy
+  url: https://spicyapi.ai/legal/privacy
+- type: TermsOfService
+  url: https://spicyapi.ai/legal/terms
+- type: StatusPage
+  url: https://status.spicyapi.ai
+apis:
+- aid: spicyapi:spicyapi-account-api
+  name: SpicyAPI Account API
+  description: The Account API from SpicyAPI — 2 operation(s) for account.
+  humanURL: https://docs.spicyapi.ai/docs/api-reference
+  baseURL: https://api.spicyapi.ai
+  tags:
+  - Account
+  properties:
+  - type: OpenAPI
+    url: openapi/spicyapi-account-api-openapi.yml
+  - type: JSONSchema
+    url: json-schema/spicyapi-create-task-request-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-chat-completion-request-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-open-aimodel-list-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-chat-completion-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-gemini-generate-content-request-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-response-object-schema.json
+- aid: spicyapi:spicyapi-media-api
+  name: SpicyAPI Media API
+  description: The Media API from SpicyAPI — 3 operation(s) for media.
+  humanURL: https://docs.spicyapi.ai/docs/api-reference
+  baseURL: https://api.spicyapi.ai
+  tags:
+  - Media
+  properties:
+  - type: OpenAPI
+    url: openapi/spicyapi-media-api-openapi.yml
+  - type: JSONSchema
+    url: json-schema/spicyapi-create-task-request-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-chat-completion-request-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-open-aimodel-list-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-chat-completion-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-gemini-generate-content-request-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-response-object-schema.json
+- aid: spicyapi:spicyapi-models-api
+  name: SpicyAPI Models API
+  description: The Models API from SpicyAPI — 3 operation(s) for models.
+  humanURL: https://docs.spicyapi.ai/docs/api-reference
+  baseURL: https://api.spicyapi.ai
+  tags:
+  - Models
+  properties:
+  - type: OpenAPI
+    url: openapi/spicyapi-models-api-openapi.yml
+  - type: JSONSchema
+    url: json-schema/spicyapi-create-task-request-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-chat-completion-request-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-open-aimodel-list-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-chat-completion-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-gemini-generate-content-request-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-response-object-schema.json
+- aid: spicyapi:spicyapi-openai-compatible-api
+  name: SpicyAPI OpenAI Compatible API
+  description: >-
+    OpenAI / Anthropic protocol shells under `/v1` and the Google Gemini shell under `/v1beta`. They share
+    API keys, limits, validation and billing with `/api/v1` but use the external protocol's own request,
+    response and error shapes. On these paths the API key may be sent as `Authorization: Bearer <key>`,
+    `x-api-key: <key>` (Anthropic SDKs) or `x-goog-api-key: <key>` (Google GenAI SDKs); `/api/v1` accepts
+    only `Authorization: Bearer`. Keys in the URL query string are never accepted.
+  humanURL: https://docs.spicyapi.ai/docs/api-reference
+  baseURL: https://api.spicyapi.ai
+  tags:
+  - OpenAI Compatible
+  properties:
+  - type: OpenAPI
+    url: openapi/spicyapi-openai-compatible-api-openapi.yml
+  - type: JSONSchema
+    url: json-schema/spicyapi-create-task-request-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-chat-completion-request-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-open-aimodel-list-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-chat-completion-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-gemini-generate-content-request-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-response-object-schema.json
+- aid: spicyapi:spicyapi-tasks-api
+  name: SpicyAPI Tasks API
+  description: The Tasks API from SpicyAPI — 7 operation(s) for tasks.
+  humanURL: https://docs.spicyapi.ai/docs/api-reference
+  baseURL: https://api.spicyapi.ai
+  tags:
+  - Tasks
+  properties:
+  - type: OpenAPI
+    url: openapi/spicyapi-tasks-api-openapi.yml
+  - type: JSONSchema
+    url: json-schema/spicyapi-create-task-request-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-chat-completion-request-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-open-aimodel-list-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-chat-completion-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-gemini-generate-content-request-schema.json
+  - type: JSONSchema
+    url: json-schema/spicyapi-response-object-schema.json
 x-submission-notes: Pay-as-you-go generative media + chat aggregator, MCP npm pkg
 x-submission-probe: OpenAPI 3.1 24 ops; llms.txt 200 (323KB); invented path 404
 x-submitted-by: support@spicyapi.ai (apis.io/add, 2026-10-09)
+x-enrichment:
+  date: '2026-10-09'
+  status: enriched
+  artifacts_added:       32
+  pass: local-v5

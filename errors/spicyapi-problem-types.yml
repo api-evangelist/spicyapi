@@ -1,0 +1,86 @@
+generated: '2026-10-09'
+method: derived
+generator: derive-problem-types.py
+source:
+- openapi/spicyapi-openapi.yml
+format: custom
+envelope:
+  media_type: application/json
+  schema: ErrorEnvelope
+coverage:
+  operations: 24
+  statuses_declared: 10
+problems:
+- status: 400
+  title: Bad Request
+  description: Invalid JSON, query, callback URL, model input, or media declaration. Invalid callBackUrl values
+    return code 400 and msg "Invalid callback U
+  operations: 20
+  media_types:
+  - application/json
+  schema: ErrorEnvelope
+- status: 401
+  title: Unauthorized
+  description: Missing, malformed, expired, revoked, or otherwise invalid API key.
+  operations: 23
+  media_types:
+  - application/json
+  schema: ErrorEnvelope
+- status: 402
+  title: Payment Required
+  description: Insufficient balance (`40201`) or a spend cap was reached (`40202`).
+  operations: 10
+  media_types:
+  - application/json
+  schema: ErrorEnvelope
+- status: 403
+  title: Forbidden
+  description: Account, model, API-key, IP, or region authorization failed.
+  operations: 23
+  media_types:
+  - application/json
+  schema: ErrorEnvelope
+- status: 404
+  title: Not Found
+  description: Resource does not exist or is not visible to this account and API key. These cases are intentionally
+    indistinguishable.
+  operations: 15
+  media_types:
+  - application/json
+  schema: ErrorEnvelope
+- status: 409
+  title: Conflict
+  description: Idempotency or media-transfer state conflicts with this request.
+  operations: 13
+  media_types:
+  - application/json
+  schema: ErrorEnvelope
+- status: 413
+  title: Content Too Large
+  description: Request body exceeds the server's accepted size limit.
+  operations: 10
+  media_types:
+  - application/json
+  schema: ErrorEnvelope
+- status: 429
+  title: Too Many Requests
+  description: Account-level request limit exceeded.
+  operations: 24
+  media_types:
+  - application/json
+  schema: ErrorEnvelope
+- status: 500
+  title: Internal Server Error
+  description: Internal failure. Details are not exposed; report `request_id` to support.
+  operations: 23
+  media_types:
+  - application/json
+  schema: ErrorEnvelope
+- status: 503
+  title: Service Unavailable
+  description: 'HTTP 503 carries one of three business codes. `50301`: no usable deployment or effective customer
+    price exists for the selected model. `503`'
+  operations: 15
+  media_types:
+  - application/json
+  schema: ErrorEnvelope

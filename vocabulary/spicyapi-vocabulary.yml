@@ -1,0 +1,284 @@
+generated: '2026-10-09'
+method: derived
+generator: derive-vocabulary.py
+source: openapi/spicyapi-openapi.yml
+vocabulary:
+  name: SpicyAPI Domain Vocabulary
+  description: 'Terms declared by SpicyAPI''s own API contract: its resource groups, objects and enumerations, with the contract''s definitions.
+    Derived, not authored.'
+  version: '2026-10-09'
+  terms:
+  - term: OpenAI Compatible
+    definition: 'OpenAI / Anthropic protocol shells under `/v1` and the Google Gemini shell under `/v1beta`. They share API keys, limits, validation
+      and billing with `/api/v1` but use the external protocol''s own request, response and error shapes. On these paths the API key may be sent
+      as `Authorization: Bearer `, `x-api-key: ` (Anthropic SDKs) or `x-goog-api-key: ` (Google GenAI SDKs); `/api/v1` accepts only `Aut'
+    tags:
+    - Resource Group
+    source: openapi/spicyapi-openapi.yml
+  - term: FundingGrantItem
+    definition: 'Object declared by the contract with fields: id, name, amountUsd, availableUsd, heldUsd, spentUsd, status, startsAt, expiresAt,
+      modelSlugs, customerMemo, createdAt.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/FundingGrantItem
+  - term: CreditFacilityItem
+    definition: 'Object declared by the contract with fields: enabled, limitUsd, availableUsd, usedUsd, heldUsd, expiresAt, status, version.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/CreditFacilityItem
+  - term: FundingOverview
+    definition: 'Object declared by the contract with fields: balanceUsd, heldUsd, prepaidAvailableUsd, grantAvailableUsd, cashShortfallUsd, credit,
+      grants, grantsHasMore.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/FundingOverview
+  - term: EnvelopeBase
+    definition: 'Object declared by the contract with fields: code, msg, request_id.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/EnvelopeBase
+  - term: CreateTaskRequest
+    definition: 'Object declared by the contract with fields: model, input, callBackUrl, quoteId, expectedCost.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/CreateTaskRequest
+  - term: TaskQuoteResponse
+    definition: 'Object declared by the contract with fields: quoteId, model, estimatedCost, maxCharge, currency, quantity, unit, expiresAt, expectedCharge,
+      billingRoutes.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/TaskQuoteResponse
+  - term: CreateTaskResponse
+    definition: 'Object declared by the contract with fields: taskId, deadlineAt, state, estimatedCost.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/CreateTaskResponse
+  - term: TaskActionRequest
+    definition: 'Object declared by the contract with fields: taskId.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/TaskActionRequest
+  - term: TaskPurgeResponse
+    definition: 'Object declared by the contract with fields: taskId, contentState, purgedAt, contentRemovedBy, billingRetained, mediaDeletionPending.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/TaskPurgeResponse
+  - term: TaskOutput
+    definition: First-party result metadata. Ready assets include directly usable temporary URLs; no download-ticket request is needed. Poll again
+      to refresh an expired URL. Temporary URLs are bearer access grants; never attach your API key when fetching them.
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/TaskOutput
+  - term: TaskTranscript
+    definition: Structured transcription result, present only on speech-to-text endpoints that return it. `text` above stays the plain transcript;
+      this object adds timing and language details. Erased together with the rest of the task output on the prompt-retention schedule.
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/TaskTranscript
+  - term: TaskTranscriptWord
+    definition: 'Object declared by the contract with fields: text, start, end, type, speakerId.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/TaskTranscriptWord
+  - term: TaskTranscriptChannel
+    definition: 'Object declared by the contract with fields: index, text, language, languageCode, words.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/TaskTranscriptChannel
+  - term: TaskOutputAsset
+    definition: 'Object declared by the contract with fields: key, url, expiresAt, mime, width, height, durationSeconds, bytes, role, nsfw, pending,
+      unavailable. (1 more)'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/TaskOutputAsset
+  - term: TaskRecord
+    definition: 'Object declared by the contract with fields: taskId, sourceTaskId, model, state, input, output, errorCode, errorMessage, cost,
+      settled, billingRoute, createdAt. (6 more)'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/TaskRecord
+  - term: TaskRetention
+    definition: When this task's content is scheduled to be removed, and which layer decided it. Omitted for tasks created before per-task retention
+      existed; those follow the platform maximum.
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/TaskRetention
+  - term: LegacyWebhookPayload
+    definition: Version 1 compatibility callback. New integrations must use version 2.
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/LegacyWebhookPayload
+  - term: APIKeyTaskItem
+    definition: 'Object declared by the contract with fields: taskId, requestId, model, state, cost, settled, createdAt, deadlineAt, completedAt.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/APIKeyTaskItem
+  - term: APIKeyTaskListResponse
+    definition: 'Object declared by the contract with fields: items, hasMore, nextCursor.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/APIKeyTaskListResponse
+  - term: APIKeyUsageResponse
+    definition: 'Object declared by the contract with fields: from, to, currency, totalCalls, totalSpend, days, models.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/APIKeyUsageResponse
+  - term: UsageDayItem
+    definition: 'Object declared by the contract with fields: day, calls, succeeded, failed, spend.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/UsageDayItem
+  - term: UsageModelItem
+    definition: 'Object declared by the contract with fields: model, calls, succeeded, failed, spend.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/UsageModelItem
+  - term: Balance
+    definition: 'Object declared by the contract with fields: funding, available, held, total.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/Balance
+  - term: APIModelPrice
+    definition: 'Object declared by the contract with fields: variant, unit, price, regularPrice, offerLabel, offerPercent, offerEndsAt, currency,
+      officialFallbackPrice.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/APIModelPrice
+  - term: APIModel
+    definition: 'Object declared by the contract with fields: model, family, displayName, provider, modality, tasks, async, mature, policyTier,
+      toolkit, taskTimeoutSeconds, maxOutputDurationSeconds. (12 more)'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/APIModel
+  - term: APIModelExample
+    definition: 'Object declared by the contract with fields: id, input, sortWeight.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/APIModelExample
+  - term: APIModelList
+    definition: 'Object declared by the contract with fields: total, items.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/APIModelList
+  - term: PublicCatalogList
+    definition: 'Object declared by the contract with fields: locale, total, items.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/PublicCatalogList
+  - term: PublicCatalogItem
+    definition: Evaluation view of one endpoint. Additional presentation fields are returned and documented in console-openapi.yaml.
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/PublicCatalogItem
+  - term: PublicCatalogPrice
+    definition: 'Object declared by the contract with fields: amount, unit, variant, tiers, regularAmount, offerLabel, offerPercent, offerEndsAt,
+      perMillionTokens, listPrice, variants.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/PublicCatalogPrice
+  - term: UploadURLRequest
+    definition: 'Object declared by the contract with fields: contentType, bytes.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/UploadURLRequest
+  - term: UploadURLResponse
+    definition: 'Object declared by the contract with fields: fileId, key, uploadUrl, method, headers, expiresAt, maxBytes.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/UploadURLResponse
+  - term: FileCommitResponse
+    definition: 'Object declared by the contract with fields: fileId, status, bytes, contentType, sha256, uri, expiresAt, durationSeconds, width,
+      height.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/FileCommitResponse
+  - term: DownloadURLRequest
+    definition: 'Object declared by the contract with fields: taskId, key.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/DownloadURLRequest
+  - term: DownloadURLResponse
+    definition: 'Object declared by the contract with fields: key, url, expiresAt.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/DownloadURLResponse
+  - term: USDString
+    definition: Decimal USD amount encoded as a string to avoid binary floating-point loss.
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/USDString
+  - term: OpenAIErrorBody
+    definition: 'Object declared by the contract with fields: error.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/OpenAIErrorBody
+  - term: AnthropicErrorBody
+    definition: 'Object declared by the contract with fields: type, error.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/AnthropicErrorBody
+  - term: OpenAIModelList
+    definition: 'Object declared by the contract with fields: object, data.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/OpenAIModelList
+  - term: ChatCompletionRequest
+    definition: 'Object declared by the contract with fields: model, messages, stream, max_tokens, max_completion_tokens, temperature, top_p,
+      top_k, seed, stop, tools, tool_choice. (2 more)'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/ChatCompletionRequest
+  - term: ChatCompletion
+    definition: 'Object declared by the contract with fields: id, object, created, model, choices, usage.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/ChatCompletion
+  - term: ResponsesRequest
+    definition: 'Object declared by the contract with fields: model, input, instructions, max_output_tokens, temperature, top_p, tools, tool_choice,
+      text, reasoning, stream.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/ResponsesRequest
+  - term: ResponseObject
+    definition: 'Object declared by the contract with fields: id, object, created_at, status, model, output, error, incomplete_details, usage.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/ResponseObject
+  - term: GeminiGenerateContentRequest
+    definition: Google Gemini `generateContent` request. Which generation parameters a model accepts comes from that model's `inputSchema` in
+      `/v1/models` and the catalog. Sampling parameters the model does not declare (temperature, topP, topK, penalties) are ignored and listed
+      in the `X-Spicy-Ignored-Params` response header; any other unsupported parameter returns 400.
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/GeminiGenerateContentRequest
+  - term: GeminiGenerateContentResponse
+    definition: 'Object declared by the contract with fields: candidates, usageMetadata, modelVersion, responseId.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/GeminiGenerateContentResponse
+  - term: GeminiErrorBody
+    definition: 'Object declared by the contract with fields: error.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/GeminiErrorBody
+  - term: AnthropicMessageRequest
+    definition: 'Object declared by the contract with fields: model, system, messages, max_tokens, temperature, top_p, top_k, stop_sequences,
+      tools, tool_choice, stream.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/AnthropicMessageRequest
+  - term: AnthropicMessage
+    definition: 'Object declared by the contract with fields: id, type, role, model, content, stop_reason, stop_sequence, usage.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/AnthropicMessage
+  - term: VideoCreateRequest
+    definition: 'Object declared by the contract with fields: model, prompt, input_reference, seconds, size.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/VideoCreateRequest
+  - term: Video
+    definition: 'Object declared by the contract with fields: id, object, model, status, progress, created_at, completed_at, seconds, size, error.'
+    tags:
+    - Object
+    source: openapi/spicyapi-openapi.yml#/components/schemas/Video

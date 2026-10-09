@@ -1,0 +1,755 @@
+openapi: 3.2.0
+info:
+  title: Spicyapi Models API
+  version: 1.0.0
+  description: 'Operations tagged Models across 2 of this provider''s published API definitions: spicyapi-openapi.yaml, spicyapi-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://api.spicyapi.ai
+  description: Production
+security:
+- bearerAuth: []
+tags:
+- name: Models
+paths:
+  /api/v1/models:
+    get:
+      tags:
+      - Models
+      operationId: listModels
+      summary: List callable models and account-specific prices
+      description: 'Returns all enabled models without pagination. The response is private
+
+        because prices include the authenticated account''s group multiplier.
+
+        The server sends `Cache-Control: private, max-age=60`.'
+      parameters:
+      - name: modality
+        in: query
+        schema:
+          type: string
+          enum:
+          - image
+          - video
+          - audio
+          - text
+      - name: provider
+        in: query
+        schema:
+          type: string
+        description: Exact model creator/author identifier, such as the research lab that built the model.
+      - name: task
+        in: query
+        schema:
+          type: string
+        description: 'Exact supported task, for example `text-to-image`. Image editing accepts either spelling: `edit` (the published call suffix) and `image-to-image` (the value returned in `tasks`) select the same endpoints.'
+      - name: search
+        in: query
+        schema:
+          type: string
+          maxLength: 128
+      - name: includeSchema
+        in: query
+        schema:
+          oneOf:
+          - type: boolean
+          - type: integer
+            enum:
+            - 0
+            - 1
+        description: Include each model's input JSON Schema when `true` or `1`.
+      - name: includeExamples
+        in: query
+        schema:
+          oneOf:
+          - type: boolean
+          - type: integer
+            enum:
+            - 0
+            - 1
+        description: Include validated example inputs when `true` or `1`.
+      responses:
+        '200':
+          description: Model list.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: private, max-age=60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelListEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    servers:
+    - url: https://api.spicyapi.ai
+      description: Production
+  /api/v1/models/{model}:
+    get:
+      tags:
+      - Models
+      operationId: getModel
+      summary: Get one model, including its input JSON Schema
+      description: '`model` is the exact value used by `createTask.model` and may contain
+
+        slashes. URL-encode embedded slashes when using clients that treat path
+
+        parameters as one segment (for example `family%2Fversion%2Ftask`).'
+      parameters:
+      - name: model
+        in: path
+        required: true
+        allowReserved: true
+        schema:
+          type: string
+          minLength: 1
+      responses:
+        '200':
+          description: Complete model record.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: private, max-age=60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    servers:
+    - url: https://api.spicyapi.ai
+      description: Production
+  /console/v1/catalog/models:
+    get:
+      tags:
+      - Models
+      operationId: listPublicCatalog
+      summary: Anonymous evaluation catalogue (no API key)
+      security: []
+      description: 'The one integration-relevant path that reads without credentials. It
+
+        exists so that "which models are there and what do they cost" can be
+
+        answered before signing up, which is the order integrations actually
+
+        evaluate in.
+
+
+        Use it while evaluating; use `GET /api/v1/models` once you hold a key.
+
+        The authenticated catalogue is still the only source for callable model
+
+        IDs at integration time: it is scoped to the key, carries the account''s
+
+        group multiplier, the full input JSON Schema and validated examples,
+
+        and it is the surface `createTask.model` is contractually tied to.
+
+        This one is public, cached at the edge and priced at the standard rate.
+
+
+        Each item carries both `model` and `slug` with the same value, so
+
+        parsing code written here keeps working against `/api/v1/models`.
+
+
+        The complete item shape (marketing copy, assets, family routing) is
+
+        documented in `console-openapi.yaml`; the fields below are the ones an
+
+        integration cares about, and the object carries more.'
+      parameters:
+      - name: locale
+        in: query
+        schema:
+          type: string
+          enum:
+          - en
+          - ja
+          - ko
+          - de
+          - fr
+          - es
+          - pt-BR
+          - ru
+          - it
+          - pl
+          default: en
+        description: Content language. Defaults to `en` when omitted. An unsupported value is rejected with 400 rather than silently falling back.
+      - name: strict
+        in: query
+        schema:
+          oneOf:
+          - type: boolean
+          - type: integer
+            enum:
+            - 0
+            - 1
+        description: When `1` or `true`, return only models whose copy is published in that exact locale, with no fallback. Sitemap generation needs this; integrations normally do not.
+      responses:
+        '200':
+          description: Published catalogue for one locale.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: public, max-age=60, s-maxage=300, stale-while-revalidate=86400
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicCatalogEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    servers:
+    - url: https://api.spicyapi.ai
+      description: Production
+components:
+  schemas:
+    APIModelList:
+      type: object
+      required:
+      - total
+      - items
+      properties:
+        total:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/APIModel'
+    ModelEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          code:
+            type: integer
+            const: 200
+          msg:
+            type: string
+            const: success
+          data:
+            $ref: '#/components/schemas/APIModel'
+    USDString:
+      type: string
+      pattern: ^-?[0-9]+(?:\.[0-9]+)?$
+      description: Decimal USD amount encoded as a string to avoid binary floating-point loss.
+    PublicCatalogEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          code:
+            type: integer
+            const: 200
+          msg:
+            type: string
+            const: success
+          data:
+            $ref: '#/components/schemas/PublicCatalogList'
+    PublicCatalogItem:
+      type: object
+      description: Evaluation view of one endpoint. Additional presentation fields are returned and documented in console-openapi.yaml.
+      required:
+      - model
+      - slug
+      - family
+      - displayName
+      - provider
+      - modality
+      - tasks
+      - status
+      - callable
+      properties:
+        model:
+          type: string
+          description: Same value as `slug`, under the field name `/api/v1/models` uses. This is the value `createTask.model` takes.
+        slug:
+          type: string
+        aliases:
+          type: array
+          items:
+            type: string
+          description: Previously published identifiers that still resolve to this endpoint.
+        family:
+          type: string
+        familyPageSlug:
+          type: string
+        familyDisplayName:
+          type: string
+        displayName:
+          type: string
+        provider:
+          type: string
+          description: The model's creator, for example `ByteDance`. Never an execution channel.
+        modality:
+          type: string
+          enum:
+          - image
+          - video
+          - audio
+          - text
+        tasks:
+          type: array
+          items:
+            type: string
+          description: Same values and meaning as APIModel.tasks, including the `edit` / `image-to-image` split.
+        mature:
+          type: boolean
+        policyTier:
+          type: string
+          enum:
+          - unrestricted
+          - borderline
+          - softened
+          - filtered
+          - unspecified
+          description: Same values and meaning as APIModel.policyTier. Treat the set as open.
+        toolkit:
+          type: string
+          enum:
+          - subject-swap
+          - studio-tools
+          description: Which toolkit family this model belongs to (subject-swap for identity swaps; studio-tools for single-purpose image and video tools such as background removal or upscaling). Informational classification for catalogue grouping only; it does not participate in routing
+          pricing or authorization. Absent when the model is not part of a toolkit.: null
+        async:
+          type: boolean
+        status:
+          type: string
+          enum:
+          - published
+          - live
+          - paused
+          description: Operator intent. `live` is the only status that can be callable.
+        callable:
+          type: boolean
+          description: Whether a fully priced, routable execution path exists right now. A callable endpoint always has a price; an endpoint without a price is never callable.
+        price:
+          oneOf:
+          - $ref: '#/components/schemas/PublicCatalogPrice'
+          - type: 'null'
+          description: Standard-rate starting price, or absent when the endpoint is not currently sellable. It is never reported as `0`.
+    EnvelopeBase:
+      type: object
+      required:
+      - code
+      - msg
+      - request_id
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+        request_id:
+          type: string
+          description: Correlation identifier. Include it in support requests.
+    ErrorEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        properties:
+          code:
+            type: integer
+            enum:
+            - 400
+            - 40003
+            - 40004
+            - 401
+            - 40201
+            - 40202
+            - 403
+            - 40301
+            - 40302
+            - 40303
+            - 40310
+            - 404
+            - 409
+            - 40901
+            - 413
+            - 429
+            - 500
+            - 503
+            - 50301
+            - 50302
+            description: 'Business code. `40003`: an uploaded file''s actual size, media type or signature does not match its upload ticket (file commit). `40004`: the request is valid but no deployment can serve this exact parameter combination; change the named parameter and retry. `503`: a dependency is temporarily unavailable (for example a list or usage query timed out, or inline image storage failed); honour `Retry-After` when present. `50301`: the model has no usable deployment or effective price right now. `50302`: a synchronous generation (streaming) failed upstream and the charge was refunded. Retry with a **new** `Idempotency-Key` — the original key replays the same failure, so a transport-level retry that keeps the key can never succeed. `40301`: this key is not allowed to call this model — check the key''s model restrictions in the Console. `40302`: the caller''s address is not in this key''s IP allow-list. `40303`: the request comes from a region this service is not offered in; the message deliberately does not state how that is determined, and neither does this description. `40310`: the account has not verified its email address yet, so it cannot run models. Open the verification link that was emailed at sign-up, or send a new one from the Console; the key starts working as soon as the address is verified, with no change on your side.'
+          msg:
+            type: string
+            description: Human-readable explanation, English unless `Accept-Language` or the account's API error language selects another supported language. Never parse it; branch on `code`.
+    PublicCatalogList:
+      type: object
+      required:
+      - locale
+      - items
+      - total
+      properties:
+        locale:
+          type: string
+          description: The locale the copy was resolved to.
+        total:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicCatalogItem'
+    APIModel:
+      type: object
+      required:
+      - model
+      - family
+      - displayName
+      - provider
+      - modality
+      - tasks
+      - async
+      - mature
+      - policyTier
+      - taskTimeoutSeconds
+      - enabled
+      - available
+      - quantityField
+      - pricing
+      - version
+      - availability
+      - badges
+      - relatedModels
+      - updatedAt
+      properties:
+        model:
+          type: string
+          description: Preferred callable identifier in publisher/model/task form. Image editing uses the edit suffix; previously published identifiers remain accepted.
+          example: bytedance/seedream-5.0-lite/edit
+        family:
+          type: string
+          description: Stable product-family identifier; endpoint variants are listed in `tasks` and expressed by `inputSchema`.
+        displayName:
+          type: string
+        provider:
+          type: string
+          description: Model creator/author identifier, such as the research lab that built the model.
+        modality:
+          type: string
+          enum:
+          - image
+          - video
+          - audio
+          - text
+        tasks:
+          type: array
+          items:
+            type: string
+          description: 'The internal task classification of this one endpoint. Always exactly one element, and it is not always the suffix of `model`: image editing endpoints are published as `.../edit` but classified as `image-to-image`, because renaming the call did not reclassify the work. Use `model` to call, and `tasks[0]` only to group or filter. Other values match their suffix: `text-to-image`, `text-to-video`, `image-to-video`, `reference-to-video`, `video-edit`, `video-extend`, `video-analyze`, `character-animation`, `talking-avatar`, `lip-sync`, `video-to-audio` (returns the same video with a generated sound track), `frame-interpolation` (returns the same video at twice its frame rate, same length and audio), `layer-decomposition` (returns a base image plus transparent layers, see `TaskOutputAsset.layer`), `speech-to-text`, `chat`. New values appear as models are added, so treat the set as open.'
+        async:
+          type: boolean
+        mature:
+          type: boolean
+          description: Informational model-creator capability metadata only. It does not participate in authorization, availability decisions, or request rejection.
+        policyTier:
+          type: string
+          enum:
+          - unrestricted
+          - borderline
+          - softened
+          - filtered
+          - unspecified
+          description: 'Informational model-creator policy metadata only. It does not participate in authorization, availability decisions, or request rejection. `unrestricted`: the model adds no refusal layer of its own. `borderline`: its own policy lets some requests through and may still decline others. `softened`: it does not refuse and does not fail — it quietly returns a toned-down result, and that task settles and is charged like any other success. `filtered`: it declines requests its own policy restricts, which surfaces as a `content_rejected` failure. `unspecified`: no tier has been recorded for this model. Treat the set as open: a value you do not recognise must not break your client.'
+        toolkit:
+          type: string
+          enum:
+          - subject-swap
+          - studio-tools
+          description: Which toolkit family this model belongs to (subject-swap for identity swaps; studio-tools for single-purpose image and video tools such as background removal or upscaling). Informational classification for catalogue grouping only; it does not participate in routing, pricing or authorization. Absent when the model is not part of a toolkit.
+        taskTimeoutSeconds:
+          type: integer
+          minimum: 1
+          description: Absolute platform execution deadline before timeout/refund; not media output duration.
+        maxOutputDurationSeconds:
+          type: integer
+          minimum: 1
+          description: Maximum output duration the model schema allows, taken from the `maximum` of its `duration_seconds` property; omitted when that property is absent or has no declared maximum. Distinct from `taskTimeoutSeconds`, which is the platform execution deadline.
+        enabled:
+          type: boolean
+        available:
+          type: boolean
+        quantityField:
+          type: string
+        pricing:
+          type: array
+          items:
+            $ref: '#/components/schemas/APIModelPrice'
+        startingPrice:
+          $ref: '#/components/schemas/APIModelPrice'
+        inputSchema:
+          type: object
+          description: 'JSON Schema draft 2020-12 used by `createTask.input` validation and Playground rendering. Standard JSON Schema keywords validate. Presentation hints live only in a per-property `x-ui` object whose keys are snake_case and drawn from a closed set: `widget`, `order`, `label`, `placeholder`, `rows`, `step`, `unit`, `accept`, `max_size_mb`, `advanced`, `primary`, `affects_price`, `visible_when`, `enum_labels`. `x-ui.order` is the only source of field order (descending first). `x-ui.widget` is one of `textarea`, `text`, `upload`, `multi-upload`, `select`, `radio`, `slider`, `number`, `switch`, `json`, `object-list`, `chat-messages`, `hidden`. Root-level composition is limited to `anyOf`, where every branch contains only `required`, and `allOf`, where each branch is `if` (`required` or `properties.*.const`) plus `then` (`required`); `oneOf`, `not` and `dependentSchemas` never appear. Unknown hints must be ignored.'
+          additionalProperties: true
+        version:
+          type: string
+          description: Public model-catalog version label used to detect schema or metadata changes.
+        availability:
+          type: string
+          enum:
+          - planned
+          - available
+          - preview
+          - maintenance
+        badges:
+          type: array
+          description: Closed capability and licensing vocabulary; clients should ignore unknown future IDs.
+          items:
+            type: string
+            enum:
+            - commercial_use
+            - no_watermark
+            - commercial_restricted
+            - reference_input
+            - audio_output
+            - streaming
+            - fast_tier
+            - high_resolution
+            - long_context
+            - mature_capable
+            - policy_unrestricted
+            - policy_borderline
+        relatedModels:
+          type: array
+          description: Curated model identifiers suitable for alternatives or workflow steps.
+          items:
+            type: string
+        examples:
+          type: array
+          description: Inputs validated against this model's current input schema.
+          items:
+            $ref: '#/components/schemas/APIModelExample'
+        updatedAt:
+          type: string
+          format: date-time
+    APIModelExample:
+      type: object
+      required:
+      - id
+      - input
+      - sortWeight
+      properties:
+        id:
+          type: string
+        input:
+          type: object
+          additionalProperties: true
+        sortWeight:
+          type: integer
+    PublicCatalogPrice:
+      type: object
+      required:
+      - amount
+      - unit
+      - tiers
+      properties:
+        amount:
+          type: string
+          description: Lowest tier's unit price as a decimal string. Decimal strings, not numbers, because these values are displayed and binary floats cannot represent them exactly.
+        unit:
+          type: string
+          description: Billing unit identifier, for example per_image or per_second.
+        variant:
+          type: string
+          description: The tier this price belongs to; absent when the model has one tier.
+        tiers:
+          type: integer
+          description: Number of currently effective tiers. Greater than one means this is a starting price.
+        regularAmount:
+          type: string
+          description: Pre-discount price
+          present only when a customer offer applies.: null
+        offerLabel:
+          type: string
+        offerPercent:
+          type: string
+        offerEndsAt:
+          type: string
+          format: date-time
+        perMillionTokens:
+          type: object
+          description: Standard per-million-token prices for text models.
+          required:
+          - input
+          - output
+          properties:
+            input:
+              type: string
+            cachedInput:
+              type: string
+            output:
+              type: string
+            cacheWrite:
+              type: string
+        listPrice:
+          type: object
+          description: The model creator's own published price, present only when ours is at least 1% lower. It is not our pre-discount price.
+        variants:
+          type: array
+          description: 'Every priced tier of a per-second, per-image or per-request model, cheapest first (the first entry is the starting price). Absent for per-token models. `variant` is the raw tier key: a single value such as `720p`, or a compound key such as `generate_audio=false;resolution=1080p`.'
+          items:
+            type: object
+            required:
+            - variant
+            - amount
+            - unit
+            properties:
+              variant:
+                type: string
+              amount:
+                type: string
+              regularAmount:
+                type: string
+              unit:
+                type: string
+              listPrice:
+                type: object
+                description: This tier's own reference price, under the same rules as listPrice above.
+    APIModelPrice:
+      type: object
+      required:
+      - variant
+      - unit
+      - price
+      - currency
+      properties:
+        variant:
+          type: string
+          description: Price tier key. Empty when the model has a single price. When one input field sets the price, it is that field's value as is (for example `720p`). When several fields do, it is `field=value` pairs sorted by field name and joined with `;` (for example `duration=5;resolution=720p`), with values URL-encoded; `~` stands for an optional field that was not sent and has no default.
+        unit:
+          type: string
+          enum:
+          - per_image
+          - per_second
+          - per_request
+          - per_1k_tokens
+          - per_1k_characters
+        price:
+          $ref: '#/components/schemas/USDString'
+        regularPrice:
+          $ref: '#/components/schemas/USDString'
+        offerLabel:
+          type: string
+        offerPercent:
+          type: string
+        offerEndsAt:
+          type: string
+          format: date-time
+        currency:
+          type: string
+          const: USD
+        officialFallbackPrice:
+          allOf:
+          - $ref: '#/components/schemas/USDString'
+          description: 'Present only for models with an economy route. `price` is then the economy-route price and this is the same tier''s official price: the most a request is charged when `official_fallback` is `true` and the economy route fails.'
+    ModelListEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          code:
+            type: integer
+            const: 200
+          msg:
+            type: string
+            const: success
+          data:
+            $ref: '#/components/schemas/APIModelList'
+  headers:
+    RateLimitRemaining:
+      description: Remaining requests in the active window.
+      schema:
+        type: integer
+    RateLimitLimit:
+      description: Capacity of the active account-level rate-limit window.
+      schema:
+        type: integer
+    RetryAfter:
+      description: Seconds to wait before retrying.
+      schema:
+        type: integer
+        minimum: 1
+  responses:
+    Unauthorized:
+      description: Missing, malformed, expired, revoked, or otherwise invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    BadRequest:
+      description: Invalid JSON, query, callback URL, model input, or media declaration. Invalid callBackUrl values return code 400 and msg "Invalid callback URL" with request_id. Submitted hosts, IP addresses, and DNS diagnostics are not echoed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    RateLimited:
+      description: Account-level request limit exceeded.
+      headers:
+        X-RateLimit-Limit:
+          $ref: '#/components/headers/RateLimitLimit'
+        X-RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimitRemaining'
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ServerError:
+      description: Internal failure. Details are not exposed; report `request_id` to support.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Forbidden:
+      description: Account, model, API-key, IP, or region authorization failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    NotFound:
+      description: Resource does not exist or is not visible to this account and API key. These cases are intentionally indistinguishable.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: sk-spicy-<48 lowercase hex characters>
+      description: 'Send `Authorization: Bearer sk-spicy-...`. Keep keys server-side.'
+x-refined-from:
+- spicyapi-openapi.yaml
+- spicyapi-openapi.yml

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/spicyapi/main/json-schema/spicyapi-create-task-request-schema.json",
+  "title": "CreateTaskRequest",
+  "x-generated": "2026-10-09",
+  "x-method": "derived",
+  "x-generator": "derive-json-schema.py",
+  "x-source": "openapi/spicyapi-openapi.yml#/components/schemas/CreateTaskRequest",
+  "type": "object",
+  "required": [
+    "model",
+    "input"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Exact `model` value from the model catalog."
+    },
+    "input": {
+      "type": "object",
+      "description": "Validated against the selected model's inputSchema. Declared image fields accept public HTTPS URLs, committed spicy:// file URIs, your own persona images as spicy://p/<assetId> (created in the console; usable only with API keys you created in your personal workspace, so team workspace keys, another account's id and an unknown id all get the same rejection, and persona images are refused in video, audio and file fields), or standard Base64 Data URIs (image/jpeg, image/png, image/webp, image/gif). Inline images are limited to 1048576 decoded bytes and 8388608 pixels each, 8192 pixels per side, and 16 images / 16777216 pixels in total. The complete JSON request must fit within 2097152 bytes. Model-specific limits still apply. Bare Base64, SVG and inline audio/video are not accepted; use HTTPS or file uploads instead. Inline images are stored as account-bound uploaded files; returned input contains file URIs, never the original Base64 bytes. Quote validation does not upload or reserve funds. If the model's inputSchema declares `seed` and you omit it, we pick a random seed for this task, so two identical requests do not come back with the same output. The chosen seed is returned in the task's `input`; pass it back to hold the draw steady (a fixed seed keeps runs comparable, it does not guarantee an identical result). On the few models that cannot honour `seed` on every request, we still vary it where it applies but do not echo it. A `seed` you send yourself is always used as given. Models that offer an economy route declare the boolean `official_fallback` (default `true`): the request runs on the economy route first and, if that fails and the field is `true`, is retried once on the official route. The hold is the highest price the request can be billed at (the official price while the fallback is allowed); you are billed the price of the route that actually produced the result and the rest of the hold is released. With `false`, only the economy route is tried and the hold is the economy price.",
+      "additionalProperties": true
+    },
+    "callBackUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional public HTTPS endpoint for terminal task delivery. `http://` URLs are rejected: the delivery carries the prompt and signed result links. Explicit ports other than 443 and 80 are rejected, and URL credentials are rejected. The hostname must resolve to public IP addresses and is checked again when connecting. Invalid values return HTTP 400 with code 400, msg \"Invalid callback URL\", and request_id."
+    },
+    "quoteId": {
+      "type": "string",
+      "maxLength": 4096,
+      "description": "Signed quote returned by jobs/quote for this same account, API key and request. Does not replace Idempotency-Key."
+    },
+    "expectedCost": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/USDString"
+        }
+      ],
+      "description": "Confirmed amount to reserve, with up to nine decimal places. A changed price returns business code 40901 before reservation."
+    }
+  },
+  "$defs": {
+    "USDString": {
+      "type": "string",
+      "pattern": "^-?[0-9]+(?:\\.[0-9]+)?$",
+      "description": "Decimal USD amount encoded as a string to avoid binary floating-point loss."
+    }
+  }
+}

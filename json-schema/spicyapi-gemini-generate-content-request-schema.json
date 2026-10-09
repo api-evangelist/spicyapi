@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/spicyapi/main/json-schema/spicyapi-gemini-generate-content-request-schema.json",
+  "title": "GeminiGenerateContentRequest",
+  "description": "Google Gemini `generateContent` request. Which generation parameters a model accepts comes from that model's `inputSchema` in `/v1/models` and the catalog. Sampling parameters the model does not declare (temperature, topP, topK, penalties) are ignored and listed in the `X-Spicy-Ignored-Params` response header; any other unsupported parameter returns 400.",
+  "x-generated": "2026-10-09",
+  "x-method": "derived",
+  "x-generator": "derive-json-schema.py",
+  "x-source": "openapi/spicyapi-openapi.yml#/components/schemas/GeminiGenerateContentRequest",
+  "type": "object",
+  "required": [
+    "contents"
+  ],
+  "properties": {
+    "contents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "model"
+            ]
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "One of `text`, `inlineData {mimeType,data}`, `fileData {mimeType,fileUri}`, `functionCall {name,args}`, `functionResponse {name,response}`."
+            }
+          }
+        }
+      }
+    },
+    "systemInstruction": {
+      "type": "object"
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "toolConfig": {
+      "type": "object"
+    },
+    "generationConfig": {
+      "type": "object",
+      "properties": {
+        "temperature": {
+          "type": "number"
+        },
+        "topP": {
+          "type": "number"
+        },
+        "maxOutputTokens": {
+          "type": "integer"
+        },
+        "stopSequences": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "responseMimeType": {
+          "type": "string"
+        },
+        "responseSchema": {
+          "type": "object"
+        },
+        "thinkingConfig": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,826 @@
+{
+  "@context": {
+    "@vocab": "https://spicyapi.ai/schema#",
+    "schema": "https://schema.org/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "spicyapi": "https://spicyapi.ai/schema#",
+    "FundingGrantItem": "spicyapi:FundingGrantItem",
+    "id": {
+      "@id": "spicyapi:id",
+      "@type": "xsd:string"
+    },
+    "name": {
+      "@id": "spicyapi:name",
+      "@type": "xsd:string"
+    },
+    "amountUsd": {
+      "@id": "spicyapi:amountUsd",
+      "@type": "xsd:string"
+    },
+    "availableUsd": {
+      "@id": "spicyapi:availableUsd",
+      "@type": "xsd:string"
+    },
+    "heldUsd": {
+      "@id": "spicyapi:heldUsd",
+      "@type": "xsd:string"
+    },
+    "spentUsd": {
+      "@id": "spicyapi:spentUsd",
+      "@type": "xsd:string"
+    },
+    "status": {
+      "@id": "spicyapi:status",
+      "@type": "xsd:string"
+    },
+    "startsAt": {
+      "@id": "spicyapi:startsAt",
+      "@type": "xsd:dateTime"
+    },
+    "expiresAt": {
+      "@id": "spicyapi:expiresAt",
+      "@type": "xsd:dateTime"
+    },
+    "modelSlugs": {
+      "@id": "spicyapi:modelSlugs",
+      "@container": "@list"
+    },
+    "customerMemo": {
+      "@id": "spicyapi:customerMemo",
+      "@type": "xsd:string"
+    },
+    "createdAt": {
+      "@id": "spicyapi:createdAt",
+      "@type": "xsd:dateTime"
+    },
+    "CreditFacilityItem": "spicyapi:CreditFacilityItem",
+    "enabled": {
+      "@id": "spicyapi:enabled",
+      "@type": "xsd:boolean"
+    },
+    "limitUsd": {
+      "@id": "spicyapi:limitUsd",
+      "@type": "xsd:string"
+    },
+    "usedUsd": {
+      "@id": "spicyapi:usedUsd",
+      "@type": "xsd:string"
+    },
+    "version": {
+      "@id": "spicyapi:version",
+      "@type": "xsd:integer"
+    },
+    "FundingOverview": "spicyapi:FundingOverview",
+    "balanceUsd": {
+      "@id": "spicyapi:balanceUsd",
+      "@type": "xsd:string"
+    },
+    "prepaidAvailableUsd": {
+      "@id": "spicyapi:prepaidAvailableUsd",
+      "@type": "xsd:string"
+    },
+    "grantAvailableUsd": {
+      "@id": "spicyapi:grantAvailableUsd",
+      "@type": "xsd:string"
+    },
+    "cashShortfallUsd": {
+      "@id": "spicyapi:cashShortfallUsd",
+      "@type": "xsd:string"
+    },
+    "credit": {
+      "@id": "spicyapi:credit",
+      "@type": "@id"
+    },
+    "grants": {
+      "@id": "spicyapi:grants",
+      "@container": "@list"
+    },
+    "grantsHasMore": {
+      "@id": "spicyapi:grantsHasMore",
+      "@type": "xsd:boolean"
+    },
+    "EnvelopeBase": "spicyapi:EnvelopeBase",
+    "code": {
+      "@id": "spicyapi:code",
+      "@type": "xsd:integer"
+    },
+    "msg": {
+      "@id": "spicyapi:msg",
+      "@type": "xsd:string"
+    },
+    "request_id": {
+      "@id": "spicyapi:request_id",
+      "@type": "xsd:string"
+    },
+    "CreateTaskRequest": "spicyapi:CreateTaskRequest",
+    "model": {
+      "@id": "spicyapi:model",
+      "@type": "xsd:string"
+    },
+    "input": {
+      "@id": "spicyapi:input"
+    },
+    "callBackUrl": {
+      "@id": "spicyapi:callBackUrl",
+      "@type": "@id"
+    },
+    "quoteId": {
+      "@id": "spicyapi:quoteId",
+      "@type": "xsd:string"
+    },
+    "expectedCost": {
+      "@id": "spicyapi:expectedCost"
+    },
+    "TaskQuoteResponse": "spicyapi:TaskQuoteResponse",
+    "estimatedCost": {
+      "@id": "spicyapi:estimatedCost",
+      "@type": "@id"
+    },
+    "maxCharge": {
+      "@id": "spicyapi:maxCharge",
+      "@type": "@id"
+    },
+    "currency": {
+      "@id": "spicyapi:currency",
+      "@type": "xsd:string"
+    },
+    "quantity": {
+      "@id": "spicyapi:quantity",
+      "@type": "xsd:string"
+    },
+    "unit": {
+      "@id": "spicyapi:unit",
+      "@type": "xsd:string"
+    },
+    "expectedCharge": {
+      "@id": "spicyapi:expectedCharge"
+    },
+    "billingRoutes": {
+      "@id": "spicyapi:billingRoutes",
+      "@container": "@list"
+    },
+    "CreateTaskResponse": "spicyapi:CreateTaskResponse",
+    "taskId": {
+      "@id": "spicyapi:taskId",
+      "@type": "xsd:string"
+    },
+    "deadlineAt": {
+      "@id": "spicyapi:deadlineAt",
+      "@type": "xsd:dateTime"
+    },
+    "state": {
+      "@id": "spicyapi:state",
+      "@type": "xsd:string"
+    },
+    "TaskActionRequest": "spicyapi:TaskActionRequest",
+    "TaskPurgeResponse": "spicyapi:TaskPurgeResponse",
+    "contentState": {
+      "@id": "spicyapi:contentState",
+      "@type": "xsd:string"
+    },
+    "purgedAt": {
+      "@id": "spicyapi:purgedAt",
+      "@type": "xsd:dateTime"
+    },
+    "contentRemovedBy": {
+      "@id": "spicyapi:contentRemovedBy",
+      "@type": "xsd:string"
+    },
+    "billingRetained": {
+      "@id": "spicyapi:billingRetained",
+      "@type": "xsd:boolean"
+    },
+    "mediaDeletionPending": {
+      "@id": "spicyapi:mediaDeletionPending",
+      "@type": "xsd:boolean"
+    },
+    "TaskOutput": "spicyapi:TaskOutput",
+    "text": {
+      "@id": "spicyapi:text",
+      "@type": "xsd:string"
+    },
+    "transcript": {
+      "@id": "spicyapi:transcript",
+      "@type": "@id"
+    },
+    "assets": {
+      "@id": "spicyapi:assets",
+      "@container": "@list"
+    },
+    "TaskTranscript": "spicyapi:TaskTranscript",
+    "language": {
+      "@id": "spicyapi:language",
+      "@type": "xsd:string"
+    },
+    "languageCode": {
+      "@id": "spicyapi:languageCode",
+      "@type": "xsd:string"
+    },
+    "languageProbability": {
+      "@id": "spicyapi:languageProbability",
+      "@type": "xsd:decimal"
+    },
+    "durationSeconds": {
+      "@id": "spicyapi:durationSeconds",
+      "@type": "xsd:decimal"
+    },
+    "words": {
+      "@id": "spicyapi:words",
+      "@container": "@list"
+    },
+    "channels": {
+      "@id": "spicyapi:channels",
+      "@container": "@list"
+    },
+    "TaskTranscriptWord": "spicyapi:TaskTranscriptWord",
+    "start": {
+      "@id": "spicyapi:start",
+      "@type": "xsd:decimal"
+    },
+    "end": {
+      "@id": "spicyapi:end",
+      "@type": "xsd:decimal"
+    },
+    "type": {
+      "@id": "spicyapi:type",
+      "@type": "xsd:string"
+    },
+    "speakerId": {
+      "@id": "spicyapi:speakerId",
+      "@type": "xsd:string"
+    },
+    "TaskTranscriptChannel": "spicyapi:TaskTranscriptChannel",
+    "index": {
+      "@id": "spicyapi:index",
+      "@type": "xsd:integer"
+    },
+    "TaskOutputAsset": "spicyapi:TaskOutputAsset",
+    "key": {
+      "@id": "spicyapi:key",
+      "@type": "xsd:string"
+    },
+    "url": {
+      "@id": "spicyapi:url",
+      "@type": "@id"
+    },
+    "mime": {
+      "@id": "spicyapi:mime",
+      "@type": "xsd:string"
+    },
+    "width": {
+      "@id": "spicyapi:width",
+      "@type": "xsd:integer"
+    },
+    "height": {
+      "@id": "spicyapi:height",
+      "@type": "xsd:integer"
+    },
+    "bytes": {
+      "@id": "spicyapi:bytes",
+      "@type": "xsd:integer"
+    },
+    "role": {
+      "@id": "spicyapi:role",
+      "@type": "xsd:string"
+    },
+    "nsfw": {
+      "@id": "spicyapi:nsfw",
+      "@type": "xsd:boolean"
+    },
+    "pending": {
+      "@id": "spicyapi:pending",
+      "@type": "xsd:boolean"
+    },
+    "unavailable": {
+      "@id": "spicyapi:unavailable",
+      "@type": "xsd:boolean"
+    },
+    "layer": {
+      "@id": "spicyapi:layer"
+    },
+    "TaskRecord": "spicyapi:TaskRecord",
+    "sourceTaskId": {
+      "@id": "spicyapi:sourceTaskId",
+      "@type": "xsd:string"
+    },
+    "output": {
+      "@id": "spicyapi:output",
+      "@type": "@id"
+    },
+    "errorCode": {
+      "@id": "spicyapi:errorCode",
+      "@type": "xsd:string"
+    },
+    "errorMessage": {
+      "@id": "spicyapi:errorMessage",
+      "@type": "xsd:string"
+    },
+    "cost": {
+      "@id": "spicyapi:cost",
+      "@type": "@id"
+    },
+    "settled": {
+      "@id": "spicyapi:settled",
+      "@type": "xsd:boolean"
+    },
+    "billingRoute": {
+      "@id": "spicyapi:billingRoute",
+      "@type": "xsd:string"
+    },
+    "completedAt": {
+      "@id": "spicyapi:completedAt",
+      "@type": "xsd:dateTime"
+    },
+    "retention": {
+      "@id": "spicyapi:retention",
+      "@type": "@id"
+    },
+    "TaskRetention": "spicyapi:TaskRetention",
+    "outputsExpireAt": {
+      "@id": "spicyapi:outputsExpireAt",
+      "@type": "xsd:dateTime"
+    },
+    "promptsExpireAt": {
+      "@id": "spicyapi:promptsExpireAt",
+      "@type": "xsd:dateTime"
+    },
+    "source": {
+      "@id": "spicyapi:source",
+      "@type": "xsd:string"
+    },
+    "LegacyWebhookPayload": "spicyapi:LegacyWebhookPayload",
+    "task_id": {
+      "@id": "spicyapi:task_id",
+      "@type": "xsd:string"
+    },
+    "error_code": {
+      "@id": "spicyapi:error_code",
+      "@type": "xsd:string"
+    },
+    "error_message": {
+      "@id": "spicyapi:error_message",
+      "@type": "xsd:string"
+    },
+    "created_at": {
+      "@id": "spicyapi:created_at",
+      "@type": "xsd:dateTime"
+    },
+    "APIKeyTaskItem": "spicyapi:APIKeyTaskItem",
+    "requestId": {
+      "@id": "spicyapi:requestId",
+      "@type": "xsd:string"
+    },
+    "APIKeyTaskListResponse": "spicyapi:APIKeyTaskListResponse",
+    "items": {
+      "@id": "spicyapi:items",
+      "@container": "@list"
+    },
+    "hasMore": {
+      "@id": "spicyapi:hasMore",
+      "@type": "xsd:boolean"
+    },
+    "nextCursor": {
+      "@id": "spicyapi:nextCursor",
+      "@type": "xsd:string"
+    },
+    "APIKeyUsageResponse": "spicyapi:APIKeyUsageResponse",
+    "from": {
+      "@id": "spicyapi:from",
+      "@type": "xsd:date"
+    },
+    "to": {
+      "@id": "spicyapi:to",
+      "@type": "xsd:date"
+    },
+    "totalCalls": {
+      "@id": "spicyapi:totalCalls",
+      "@type": "xsd:integer"
+    },
+    "totalSpend": {
+      "@id": "spicyapi:totalSpend",
+      "@type": "@id"
+    },
+    "days": {
+      "@id": "spicyapi:days",
+      "@container": "@list"
+    },
+    "models": {
+      "@id": "spicyapi:models",
+      "@container": "@list"
+    },
+    "UsageDayItem": "spicyapi:UsageDayItem",
+    "day": {
+      "@id": "spicyapi:day",
+      "@type": "xsd:date"
+    },
+    "calls": {
+      "@id": "spicyapi:calls",
+      "@type": "xsd:integer"
+    },
+    "succeeded": {
+      "@id": "spicyapi:succeeded",
+      "@type": "xsd:integer"
+    },
+    "failed": {
+      "@id": "spicyapi:failed",
+      "@type": "xsd:integer"
+    },
+    "spend": {
+      "@id": "spicyapi:spend",
+      "@type": "@id"
+    },
+    "UsageModelItem": "spicyapi:UsageModelItem",
+    "Balance": "spicyapi:Balance",
+    "funding": {
+      "@id": "spicyapi:funding",
+      "@type": "@id"
+    },
+    "available": {
+      "@id": "spicyapi:available",
+      "@type": "@id"
+    },
+    "held": {
+      "@id": "spicyapi:held",
+      "@type": "@id"
+    },
+    "total": {
+      "@id": "spicyapi:total",
+      "@type": "@id"
+    },
+    "APIModelPrice": "spicyapi:APIModelPrice",
+    "variant": {
+      "@id": "spicyapi:variant",
+      "@type": "xsd:string"
+    },
+    "price": {
+      "@id": "spicyapi:price",
+      "@type": "@id"
+    },
+    "regularPrice": {
+      "@id": "spicyapi:regularPrice",
+      "@type": "@id"
+    },
+    "offerLabel": {
+      "@id": "spicyapi:offerLabel",
+      "@type": "xsd:string"
+    },
+    "offerPercent": {
+      "@id": "spicyapi:offerPercent",
+      "@type": "xsd:string"
+    },
+    "offerEndsAt": {
+      "@id": "spicyapi:offerEndsAt",
+      "@type": "xsd:dateTime"
+    },
+    "officialFallbackPrice": {
+      "@id": "spicyapi:officialFallbackPrice"
+    },
+    "APIModel": "spicyapi:APIModel",
+    "family": {
+      "@id": "spicyapi:family",
+      "@type": "xsd:string"
+    },
+    "displayName": {
+      "@id": "spicyapi:displayName",
+      "@type": "xsd:string"
+    },
+    "provider": {
+      "@id": "spicyapi:provider",
+      "@type": "xsd:string"
+    },
+    "modality": {
+      "@id": "spicyapi:modality",
+      "@type": "xsd:string"
+    },
+    "tasks": {
+      "@id": "spicyapi:tasks",
+      "@container": "@list"
+    },
+    "async": {
+      "@id": "spicyapi:async",
+      "@type": "xsd:boolean"
+    },
+    "mature": {
+      "@id": "spicyapi:mature",
+      "@type": "xsd:boolean"
+    },
+    "policyTier": {
+      "@id": "spicyapi:policyTier",
+      "@type": "xsd:string"
+    },
+    "toolkit": {
+      "@id": "spicyapi:toolkit",
+      "@type": "xsd:string"
+    },
+    "taskTimeoutSeconds": {
+      "@id": "spicyapi:taskTimeoutSeconds",
+      "@type": "xsd:integer"
+    },
+    "maxOutputDurationSeconds": {
+      "@id": "spicyapi:maxOutputDurationSeconds",
+      "@type": "xsd:integer"
+    },
+    "quantityField": {
+      "@id": "spicyapi:quantityField",
+      "@type": "xsd:string"
+    },
+    "pricing": {
+      "@id": "spicyapi:pricing",
+      "@container": "@list"
+    },
+    "startingPrice": {
+      "@id": "spicyapi:startingPrice",
+      "@type": "@id"
+    },
+    "inputSchema": {
+      "@id": "spicyapi:inputSchema"
+    },
+    "availability": {
+      "@id": "spicyapi:availability",
+      "@type": "xsd:string"
+    },
+    "badges": {
+      "@id": "spicyapi:badges",
+      "@container": "@list"
+    },
+    "relatedModels": {
+      "@id": "spicyapi:relatedModels",
+      "@container": "@list"
+    },
+    "examples": {
+      "@id": "spicyapi:examples",
+      "@container": "@list"
+    },
+    "updatedAt": {
+      "@id": "spicyapi:updatedAt",
+      "@type": "xsd:dateTime"
+    },
+    "APIModelExample": "spicyapi:APIModelExample",
+    "sortWeight": {
+      "@id": "spicyapi:sortWeight",
+      "@type": "xsd:integer"
+    },
+    "APIModelList": "spicyapi:APIModelList",
+    "PublicCatalogList": "spicyapi:PublicCatalogList",
+    "locale": {
+      "@id": "spicyapi:locale",
+      "@type": "xsd:string"
+    },
+    "PublicCatalogItem": "spicyapi:PublicCatalogItem",
+    "slug": {
+      "@id": "spicyapi:slug",
+      "@type": "xsd:string"
+    },
+    "aliases": {
+      "@id": "spicyapi:aliases",
+      "@container": "@list"
+    },
+    "familyPageSlug": {
+      "@id": "spicyapi:familyPageSlug",
+      "@type": "xsd:string"
+    },
+    "familyDisplayName": {
+      "@id": "spicyapi:familyDisplayName",
+      "@type": "xsd:string"
+    },
+    "callable": {
+      "@id": "spicyapi:callable",
+      "@type": "xsd:boolean"
+    },
+    "PublicCatalogPrice": "spicyapi:PublicCatalogPrice",
+    "amount": {
+      "@id": "spicyapi:amount",
+      "@type": "xsd:string"
+    },
+    "tiers": {
+      "@id": "spicyapi:tiers",
+      "@type": "xsd:integer"
+    },
+    "regularAmount": {
+      "@id": "spicyapi:regularAmount",
+      "@type": "xsd:string"
+    },
+    "perMillionTokens": {
+      "@id": "spicyapi:perMillionTokens"
+    },
+    "listPrice": {
+      "@id": "spicyapi:listPrice"
+    },
+    "variants": {
+      "@id": "spicyapi:variants",
+      "@container": "@list"
+    },
+    "UploadURLRequest": "spicyapi:UploadURLRequest",
+    "contentType": {
+      "@id": "spicyapi:contentType",
+      "@type": "xsd:string"
+    },
+    "UploadURLResponse": "spicyapi:UploadURLResponse",
+    "fileId": {
+      "@id": "spicyapi:fileId",
+      "@type": "xsd:string"
+    },
+    "uploadUrl": {
+      "@id": "spicyapi:uploadUrl",
+      "@type": "@id"
+    },
+    "method": {
+      "@id": "spicyapi:method",
+      "@type": "xsd:string"
+    },
+    "headers": {
+      "@id": "spicyapi:headers"
+    },
+    "maxBytes": {
+      "@id": "spicyapi:maxBytes",
+      "@type": "xsd:integer"
+    },
+    "FileCommitResponse": "spicyapi:FileCommitResponse",
+    "sha256": {
+      "@id": "spicyapi:sha256",
+      "@type": "xsd:string"
+    },
+    "uri": {
+      "@id": "spicyapi:uri",
+      "@type": "xsd:string"
+    },
+    "DownloadURLRequest": "spicyapi:DownloadURLRequest",
+    "DownloadURLResponse": "spicyapi:DownloadURLResponse",
+    "OpenAIErrorBody": "spicyapi:OpenAIErrorBody",
+    "error": {
+      "@id": "spicyapi:error"
+    },
+    "AnthropicErrorBody": "spicyapi:AnthropicErrorBody",
+    "OpenAIModelList": "spicyapi:OpenAIModelList",
+    "object": {
+      "@id": "spicyapi:object",
+      "@type": "xsd:string"
+    },
+    "data": {
+      "@id": "spicyapi:data",
+      "@container": "@list"
+    },
+    "ChatCompletionRequest": "spicyapi:ChatCompletionRequest",
+    "messages": {
+      "@id": "spicyapi:messages",
+      "@container": "@list"
+    },
+    "stream": {
+      "@id": "spicyapi:stream",
+      "@type": "xsd:boolean"
+    },
+    "max_tokens": {
+      "@id": "spicyapi:max_tokens",
+      "@type": "xsd:integer"
+    },
+    "max_completion_tokens": {
+      "@id": "spicyapi:max_completion_tokens",
+      "@type": "xsd:integer"
+    },
+    "temperature": {
+      "@id": "spicyapi:temperature",
+      "@type": "xsd:decimal"
+    },
+    "top_p": {
+      "@id": "spicyapi:top_p",
+      "@type": "xsd:decimal"
+    },
+    "top_k": {
+      "@id": "spicyapi:top_k",
+      "@type": "xsd:integer"
+    },
+    "seed": {
+      "@id": "spicyapi:seed",
+      "@type": "xsd:integer"
+    },
+    "stop": {
+      "@id": "spicyapi:stop"
+    },
+    "tools": {
+      "@id": "spicyapi:tools",
+      "@container": "@list"
+    },
+    "tool_choice": {
+      "@id": "spicyapi:tool_choice"
+    },
+    "parallel_tool_calls": {
+      "@id": "spicyapi:parallel_tool_calls",
+      "@type": "xsd:boolean"
+    },
+    "response_format": {
+      "@id": "spicyapi:response_format"
+    },
+    "ChatCompletion": "spicyapi:ChatCompletion",
+    "created": {
+      "@id": "spicyapi:created",
+      "@type": "xsd:integer"
+    },
+    "choices": {
+      "@id": "spicyapi:choices",
+      "@container": "@list"
+    },
+    "usage": {
+      "@id": "spicyapi:usage"
+    },
+    "ResponsesRequest": "spicyapi:ResponsesRequest",
+    "instructions": {
+      "@id": "spicyapi:instructions",
+      "@type": "xsd:string"
+    },
+    "max_output_tokens": {
+      "@id": "spicyapi:max_output_tokens",
+      "@type": "xsd:integer"
+    },
+    "reasoning": {
+      "@id": "spicyapi:reasoning"
+    },
+    "ResponseObject": "spicyapi:ResponseObject",
+    "incomplete_details": {
+      "@id": "spicyapi:incomplete_details"
+    },
+    "GeminiGenerateContentRequest": "spicyapi:GeminiGenerateContentRequest",
+    "contents": {
+      "@id": "spicyapi:contents",
+      "@container": "@list"
+    },
+    "systemInstruction": {
+      "@id": "spicyapi:systemInstruction"
+    },
+    "toolConfig": {
+      "@id": "spicyapi:toolConfig"
+    },
+    "generationConfig": {
+      "@id": "spicyapi:generationConfig"
+    },
+    "GeminiGenerateContentResponse": "spicyapi:GeminiGenerateContentResponse",
+    "candidates": {
+      "@id": "spicyapi:candidates",
+      "@container": "@list"
+    },
+    "usageMetadata": {
+      "@id": "spicyapi:usageMetadata"
+    },
+    "modelVersion": {
+      "@id": "spicyapi:modelVersion",
+      "@type": "xsd:string"
+    },
+    "responseId": {
+      "@id": "spicyapi:responseId",
+      "@type": "xsd:string"
+    },
+    "GeminiErrorBody": "spicyapi:GeminiErrorBody",
+    "AnthropicMessageRequest": "spicyapi:AnthropicMessageRequest",
+    "system": {
+      "@id": "spicyapi:system"
+    },
+    "stop_sequences": {
+      "@id": "spicyapi:stop_sequences",
+      "@container": "@list"
+    },
+    "AnthropicMessage": "spicyapi:AnthropicMessage",
+    "content": {
+      "@id": "spicyapi:content",
+      "@container": "@list"
+    },
+    "stop_reason": {
+      "@id": "spicyapi:stop_reason",
+      "@type": "xsd:string"
+    },
+    "stop_sequence": {
+      "@id": "spicyapi:stop_sequence"
+    },
+    "VideoCreateRequest": "spicyapi:VideoCreateRequest",
+    "prompt": {
+      "@id": "spicyapi:prompt",
+      "@type": "xsd:string"
+    },
+    "input_reference": {
+      "@id": "spicyapi:input_reference",
+      "@type": "xsd:string"
+    },
+    "seconds": {
+      "@id": "spicyapi:seconds"
+    },
+    "size": {
+      "@id": "spicyapi:size",
+      "@type": "xsd:string"
+    },
+    "Video": "spicyapi:Video",
+    "progress": {
+      "@id": "spicyapi:progress",
+      "@type": "xsd:integer"
+    },
+    "completed_at": {
+      "@id": "spicyapi:completed_at",
+      "@type": "xsd:integer"
+    }
+  },
+  "@type": "schema:Dataset",
+  "schema:name": "SpicyAPI API JSON-LD context",
+  "schema:description": "A JSON-LD @context for the objects SpicyAPI's own API contract declares: one class per component schema, one property per declared field, typed from the contract. Derived by script (derive-json-ld.py, 2026-10-09) from openapi/spicyapi-openapi.yml.",
+  "dcterms:created": "2026-10-09",
+  "dcterms:source": [
+    "openapi/spicyapi-openapi.yml"
+  ]
+}

@@ -1,0 +1,5 @@
+Contact: mailto:support@spicyapi.ai
+Expires: 2027-08-31T23:59:59Z
+Preferred-Languages: en
+Canonical: https://spicyapi.ai/.well-known/security.txt
+Policy: https://spicyapi.ai/legal/reporting

@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/spicyapi/main/json-schema/spicyapi-chat-completion-schema.json",
+  "title": "ChatCompletion",
+  "x-generated": "2026-10-09",
+  "x-method": "derived",
+  "x-generator": "derive-json-schema.py",
+  "x-source": "openapi/spicyapi-openapi.yml#/components/schemas/ChatCompletion",
+  "type": "object",
+  "required": [
+    "id",
+    "object",
+    "created",
+    "model",
+    "choices"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "object": {
+      "type": "string",
+      "const": "chat.completion"
+    },
+    "created": {
+      "type": "integer"
+    },
+    "model": {
+      "type": "string"
+    },
+    "choices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "index",
+          "message",
+          "finish_reason"
+        ],
+        "properties": {
+          "index": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string"
+              },
+              "content": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "refusal": {
+                "type": "string"
+              },
+              "reasoning_content": {
+                "type": "string",
+                "description": "Optional reasoning text returned by models that expose it. Streaming chunks use the same field in delta."
+              },
+              "tool_calls": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "finish_reason": {
+            "type": "string"
+          },
+          "logprobs": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "prompt_tokens": {
+          "type": "integer"
+        },
+        "completion_tokens": {
+          "type": "integer"
+        },
+        "total_tokens": {
+          "type": "integer"
+        },
+        "prompt_tokens_details": {
+          "type": "object",
+          "properties": {
+            "cached_tokens": {
+              "type": "integer"
+            },
+            "cache_creation_input_tokens": {
+              "type": "integer"
+            },
+            "cache_read_input_tokens": {
+              "type": "integer"
+            }
+          }
+        },
+        "completion_tokens_details": {
+          "type": "object",
+          "properties": {
+            "reasoning_tokens": {
+              "type": "integer",
+              "description": "Included in completion_tokens; do not add it again when calculating usage."
+            }
+          }
+        }
+      }
+    }
+  }
+}

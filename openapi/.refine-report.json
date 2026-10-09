@@ -1,0 +1,31 @@
+{
+  "provider": "spicyapi",
+  "sources": [
+    "_original/spicyapi-openapi.yaml",
+    "spicyapi-openapi.yml"
+  ],
+  "outputs": [
+    "spicyapi-account-api-openapi.yml",
+    "spicyapi-media-api-openapi.yml",
+    "spicyapi-models-api-openapi.yml",
+    "spicyapi-openai-compatible-api-openapi.yml",
+    "spicyapi-tasks-api-openapi.yml"
+  ],
+  "archived": [
+    "archived openapi/spicyapi-openapi.yml"
+  ],
+  "errors": [],
+  "warnings": [],
+  "notes": [
+    "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
+    "spicyapi-openapi.yaml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "spicyapi-openapi.yml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "tag 'Account' spans 2 source specs (spicyapi-openapi.yaml, spicyapi-openapi.yml): per-path servers applied",
+    "tag 'Media' spans 2 source specs (spicyapi-openapi.yaml, spicyapi-openapi.yml): per-path servers applied",
+    "tag 'Models' spans 2 source specs (spicyapi-openapi.yaml, spicyapi-openapi.yml): per-path servers applied",
+    "tag 'OpenAI Compatible' spans 2 source specs (spicyapi-openapi.yaml, spicyapi-openapi.yml): per-path servers applied",
+    "tag 'Tasks' spans 2 source specs (spicyapi-openapi.yaml, spicyapi-openapi.yml): per-path servers applied",
+    "apis.yml register: written (+5 apis, 5 total)"
+  ],
+  "skipped": []
+}

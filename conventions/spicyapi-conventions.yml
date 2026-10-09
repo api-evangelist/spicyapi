@@ -1,0 +1,20 @@
+name: SpicyAPI Conventions
+generated: '2026-10-09'
+method: searched
+source: https://docs.spicyapi.ai/docs/idempotency
+auth: 'Authorization: Bearer sk-spicy-... (see authentication/)'
+idempotency:
+  coverage: partial
+  header: Idempotency-Key
+  scope: [createTask]
+  retention: A key stays valid for 24 hours, counted from the moment it was first accepted
+  docs: https://docs.spicyapi.ai/docs/idempotency
+rate_limit_signaling:
+  headers: [X-RateLimit-Limit, X-RateLimit-Remaining, Retry-After]
+  docs: https://docs.spicyapi.ai/docs/limits
+pricing_preflight:
+  operation: quoteTask
+  note: Free price quote before a paid task is created.
+reversibility:
+  status: undocumented
+  note: purgeTask deletes a task's stored data; no refund/cancel window for a charged task was found in the docs read.

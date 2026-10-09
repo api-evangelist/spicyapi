@@ -1,0 +1,14 @@
+generated: '2026-10-09'
+method: derived
+source: openapi/spicyapi-openapi.yml
+summary:
+  types:
+  - http
+schemes:
+- name: bearerAuth
+  type: http
+  scheme: bearer
+  bearerFormat: sk-spicy-<48 lowercase hex characters>
+  description: 'Send `Authorization: Bearer sk-spicy-...`. Keep keys server-side.'
+  sources:
+  - openapi/spicyapi-openapi.yml

@@ -1,0 +1,11 @@
+name: SpicyAPI MCP Server
+generated: '2026-10-09'
+method: searched
+source: https://docs.spicyapi.ai/docs/mcp
+deployment:
+  mode: local-stdio
+  install: npx --yes --package=@spicyapi/mcp spicyapi-mcp
+  package: https://www.npmjs.com/package/@spicyapi/mcp
+  auth: api-key
+  verified: searched
+note: First-party @spicyapi/mcp (npm 0.5.0, 2026-10-05) runs as a standalone stdio or loopback (local) HTTP server; no hosted remote endpoint is documented. Source https://github.com/spicyapi-ai/spicy-mcp. Tool names are not published as a table.

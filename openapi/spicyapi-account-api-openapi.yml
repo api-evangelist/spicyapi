@@ -1,0 +1,482 @@
+openapi: 3.2.0
+info:
+  title: Spicyapi Account API
+  version: 1.0.0
+  description: 'Operations tagged Account across 2 of this provider''s published API definitions: spicyapi-openapi.yaml, spicyapi-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://api.spicyapi.ai
+  description: Production
+security:
+- bearerAuth: []
+tags:
+- name: Account
+paths:
+  /api/v1/usage:
+    get:
+      tags:
+      - Account
+      operationId: getUsage
+      summary: Get usage for the authenticated API key
+      description: 'Scope is this API key: tasks created by other keys on the same account, and generations started directly in the web console (which use no API key), are not included. For an account-wide view, use the console''s usage page.
+
+        Hidden historical tasks of this key are included. Other keys and
+
+        workspaces cannot be selected. Unknown or repeated query parameters
+
+        are rejected.
+
+        Dates form a UTC half-open interval [from,to), up to 92 days.
+
+        The default to is tomorrow in UTC; omitted from is seven days before to.
+
+        Calls are attributed to task creation time. Spend sums only settled
+
+        actual charges for those tasks, never pending holds. Late settlement
+
+        can change a previous day''s spend. These are task usage totals, not
+
+        a statement of cash movements or remaining API-key budget.
+
+        An additional account-wide token bucket allows a burst of 30 requests
+
+        and replenishes 30 tokens per minute, shared by all keys on the account.
+
+        Observe Retry-After on 429. This reporting limit fails closed when its
+
+        limiter is unavailable. Queries have a five-second server budget;
+
+        a timeout returns 503 and suggests retrying a shorter date range.'
+      parameters:
+      - name: from
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Inclusive UTC date in YYYY-MM-DD format.
+      - name: to
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Exclusive UTC date in YYYY-MM-DD format.
+      responses:
+        '200':
+          description: Current-key usage with exact USD decimal strings and sparse daily/model buckets.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKeyUsageEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+    servers:
+    - url: https://api.spicyapi.ai
+      description: Production
+  /api/v1/chat/credit:
+    get:
+      tags:
+      - Account
+      operationId: getCreditBalance
+      summary: Get net balance, promotional grants, and approved credit
+      responses:
+        '200':
+          description: Net available, held, and total balances plus funding sources in USD decimal strings. Unused credit is separate from wallet funds; model-scoped grants may not pay for every request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    servers:
+    - url: https://api.spicyapi.ai
+      description: Production
+components:
+  schemas:
+    USDString:
+      type: string
+      pattern: ^-?[0-9]+(?:\.[0-9]+)?$
+      description: Decimal USD amount encoded as a string to avoid binary floating-point loss.
+    APIKeyUsageEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          data:
+            $ref: '#/components/schemas/APIKeyUsageResponse'
+    FundingOverview:
+      type: object
+      required:
+      - balanceUsd
+      - heldUsd
+      - prepaidAvailableUsd
+      - grantAvailableUsd
+      - cashShortfallUsd
+      - credit
+      - grants
+      - grantsHasMore
+      properties:
+        balanceUsd:
+          type: string
+          description: Net wallet available balance; may be negative for approved credit consumption or external payment recovery.
+        heldUsd:
+          type: string
+        prepaidAvailableUsd:
+          type: string
+          description: Unrestricted prepaid or legacy available funds.
+        grantAvailableUsd:
+          type: string
+          description: Active available grants; model applicability is checked at task admission.
+        cashShortfallUsd:
+          type: string
+          description: External payment recovery shortfall that cannot be covered by grants or credit.
+        credit:
+          $ref: '#/components/schemas/CreditFacilityItem'
+        grants:
+          type: array
+          items:
+            $ref: '#/components/schemas/FundingGrantItem'
+        grantsHasMore:
+          type: boolean
+    BalanceEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          code:
+            type: integer
+            const: 200
+          msg:
+            type: string
+            const: success
+          data:
+            $ref: '#/components/schemas/Balance'
+    CreditFacilityItem:
+      type: object
+      required:
+      - enabled
+      - limitUsd
+      - availableUsd
+      - usedUsd
+      - heldUsd
+      - status
+      - version
+      properties:
+        enabled:
+          type: boolean
+        limitUsd:
+          type: string
+          description: Approved ceiling
+          not wallet funds.: null
+        availableUsd:
+          type: string
+        usedUsd:
+          type: string
+          description: Outstanding settled principal.
+        heldUsd:
+          type: string
+          description: Credit reserved for accepted tasks.
+        expiresAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        status:
+          type: string
+        version:
+          type: integer
+          format: int64
+    EnvelopeBase:
+      type: object
+      required:
+      - code
+      - msg
+      - request_id
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+        request_id:
+          type: string
+          description: Correlation identifier. Include it in support requests.
+    ErrorEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        properties:
+          code:
+            type: integer
+            enum:
+            - 400
+            - 40003
+            - 40004
+            - 401
+            - 40201
+            - 40202
+            - 403
+            - 40301
+            - 40302
+            - 40303
+            - 40310
+            - 404
+            - 409
+            - 40901
+            - 413
+            - 429
+            - 500
+            - 503
+            - 50301
+            - 50302
+            description: 'Business code. `40003`: an uploaded file''s actual size, media type or signature does not match its upload ticket (file commit). `40004`: the request is valid but no deployment can serve this exact parameter combination; change the named parameter and retry. `503`: a dependency is temporarily unavailable (for example a list or usage query timed out, or inline image storage failed); honour `Retry-After` when present. `50301`: the model has no usable deployment or effective price right now. `50302`: a synchronous generation (streaming) failed upstream and the charge was refunded. Retry with a **new** `Idempotency-Key` — the original key replays the same failure, so a transport-level retry that keeps the key can never succeed. `40301`: this key is not allowed to call this model — check the key''s model restrictions in the Console. `40302`: the caller''s address is not in this key''s IP allow-list. `40303`: the request comes from a region this service is not offered in; the message deliberately does not state how that is determined, and neither does this description. `40310`: the account has not verified its email address yet, so it cannot run models. Open the verification link that was emailed at sign-up, or send a new one from the Console; the key starts working as soon as the address is verified, with no change on your side.'
+          msg:
+            type: string
+            description: Human-readable explanation, English unless `Accept-Language` or the account's API error language selects another supported language. Never parse it; branch on `code`.
+    FundingGrantItem:
+      type: object
+      required:
+      - id
+      - name
+      - amountUsd
+      - availableUsd
+      - heldUsd
+      - spentUsd
+      - status
+      - startsAt
+      - modelSlugs
+      - customerMemo
+      - createdAt
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        amountUsd:
+          type: string
+        availableUsd:
+          type: string
+        heldUsd:
+          type: string
+        spentUsd:
+          type: string
+        status:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        modelSlugs:
+          type: array
+          items:
+            type: string
+          description: Empty means all models.
+        customerMemo:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    UsageModelItem:
+      type: object
+      additionalProperties: false
+      required:
+      - model
+      - calls
+      - succeeded
+      - failed
+      - spend
+      properties:
+        model:
+          type: string
+          description: Public model identifier.
+        calls:
+          type: integer
+          format: int64
+          minimum: 0
+        succeeded:
+          type: integer
+          format: int64
+          minimum: 0
+        failed:
+          type: integer
+          format: int64
+          minimum: 0
+        spend:
+          $ref: '#/components/schemas/USDString'
+    UsageDayItem:
+      type: object
+      additionalProperties: false
+      required:
+      - day
+      - calls
+      - succeeded
+      - failed
+      - spend
+      properties:
+        day:
+          type: string
+          format: date
+        calls:
+          type: integer
+          format: int64
+          minimum: 0
+        succeeded:
+          type: integer
+          format: int64
+          minimum: 0
+        failed:
+          type: integer
+          format: int64
+          minimum: 0
+        spend:
+          $ref: '#/components/schemas/USDString'
+    Balance:
+      type: object
+      required:
+      - available
+      - held
+      - total
+      properties:
+        funding:
+          $ref: '#/components/schemas/FundingOverview'
+        available:
+          $ref: '#/components/schemas/USDString'
+        held:
+          $ref: '#/components/schemas/USDString'
+        total:
+          $ref: '#/components/schemas/USDString'
+    APIKeyUsageResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - from
+      - to
+      - currency
+      - totalCalls
+      - totalSpend
+      - days
+      - models
+      properties:
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        currency:
+          type: string
+          const: USD
+        totalCalls:
+          type: integer
+          format: int64
+          minimum: 0
+        totalSpend:
+          $ref: '#/components/schemas/USDString'
+        days:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsageDayItem'
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsageModelItem'
+  headers:
+    RateLimitRemaining:
+      description: Remaining requests in the active window.
+      schema:
+        type: integer
+    RateLimitLimit:
+      description: Capacity of the active account-level rate-limit window.
+      schema:
+        type: integer
+    RetryAfter:
+      description: Seconds to wait before retrying.
+      schema:
+        type: integer
+        minimum: 1
+  responses:
+    Unauthorized:
+      description: Missing, malformed, expired, revoked, or otherwise invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    BadRequest:
+      description: Invalid JSON, query, callback URL, model input, or media declaration. Invalid callBackUrl values return code 400 and msg "Invalid callback URL" with request_id. Submitted hosts, IP addresses, and DNS diagnostics are not echoed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    RateLimited:
+      description: Account-level request limit exceeded.
+      headers:
+        X-RateLimit-Limit:
+          $ref: '#/components/headers/RateLimitLimit'
+        X-RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimitRemaining'
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Unavailable:
+      description: 'HTTP 503 carries one of three business codes. `50301`: no usable deployment or effective customer price exists for the selected model. `503`: a dependency is temporarily unavailable; retry after the `Retry-After` header when it is present. `50302`: a synchronous generation failed upstream and the charge was refunded. Nothing was charged, but send the retry with a **new** `Idempotency-Key`: reusing the original one replays the recorded failure instead of generating again.'
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ServerError:
+      description: Internal failure. Details are not exposed; report `request_id` to support.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Forbidden:
+      description: Account, model, API-key, IP, or region authorization failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: sk-spicy-<48 lowercase hex characters>
+      description: 'Send `Authorization: Bearer sk-spicy-...`. Keep keys server-side.'
+x-refined-from:
+- spicyapi-openapi.yaml
+- spicyapi-openapi.yml

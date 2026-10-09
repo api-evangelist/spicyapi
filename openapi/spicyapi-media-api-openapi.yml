@@ -1,0 +1,476 @@
+openapi: 3.2.0
+info:
+  title: Spicyapi Media API
+  version: 1.0.0
+  description: 'Operations tagged Media across 2 of this provider''s published API definitions: spicyapi-openapi.yaml, spicyapi-openapi.yml. Each path carries the servers of the definition it was published in.'
+servers:
+- url: https://api.spicyapi.ai
+  description: Production
+security:
+- bearerAuth: []
+tags:
+- name: Media
+paths:
+  /api/v1/common/upload-url:
+    post:
+      tags:
+      - Media
+      operationId: createUploadUrl
+      summary: Create a presigned image upload ticket
+      description: 'The server generates the object key. Upload the exact declared number of
+
+        bytes with PUT and copy every returned header. Supported media types are
+
+        JPEG, PNG, WebP and GIF images (10 MiB), or MP4/WebM video and
+
+        MP3/WAV audio (90 MiB, at most 600 seconds). Audio/video commit verifies
+
+        format and measurable duration; it does not apply a platform content filter. After PUT,
+
+        call the file commit endpoint and use its spicy:// URI in task input.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadURLRequest'
+      responses:
+        '200':
+          description: Presigned upload ticket.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadURLEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    servers:
+    - url: https://api.spicyapi.ai
+      description: Production
+  /api/v1/files/{fileId}/commit:
+    post:
+      tags:
+      - Media
+      operationId: commitUploadedFile
+      summary: Commit a completed direct upload
+      description: 'Compares the stored byte count and media type with the ticket, checks
+
+        the image signature, computes SHA-256, and copies the temporary object
+
+        to an immutable private key. Reference this uploaded file with the returned
+
+        spicy:// URI. Publicly accessible HTTPS media URLs can instead be passed
+
+        directly in supported model input fields, without uploading. Repeating
+
+        a successful commit is idempotent.'
+      parameters:
+      - name: fileId
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^fil_
+      responses:
+        '200':
+          description: Ready tenant-scoped file reference.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileCommitEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    servers:
+    - url: https://api.spicyapi.ai
+      description: Production
+  /api/v1/common/download-url:
+    post:
+      tags:
+      - Media
+      operationId: createDownloadUrl
+      summary: Create a short-lived task output download URL
+      description: 'The server verifies both task ownership and that the requested key is an
+
+        output of that task. Leave `key` empty to select the first output.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadURLRequest'
+      responses:
+        '200':
+          description: Short-lived download ticket.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadURLEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    servers:
+    - url: https://api.spicyapi.ai
+      description: Production
+components:
+  responses:
+    PayloadTooLarge:
+      description: Request body exceeds the server's accepted size limit.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Unauthorized:
+      description: Missing, malformed, expired, revoked, or otherwise invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    BadRequest:
+      description: Invalid JSON, query, callback URL, model input, or media declaration. Invalid callBackUrl values return code 400 and msg "Invalid callback URL" with request_id. Submitted hosts, IP addresses, and DNS diagnostics are not echoed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Conflict:
+      description: Idempotency or media-transfer state conflicts with this request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    RateLimited:
+      description: Account-level request limit exceeded.
+      headers:
+        X-RateLimit-Limit:
+          $ref: '#/components/headers/RateLimitLimit'
+        X-RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimitRemaining'
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ServerError:
+      description: Internal failure. Details are not exposed; report `request_id` to support.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Forbidden:
+      description: Account, model, API-key, IP, or region authorization failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    NotFound:
+      description: Resource does not exist or is not visible to this account and API key. These cases are intentionally indistinguishable.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+  headers:
+    RateLimitRemaining:
+      description: Remaining requests in the active window.
+      schema:
+        type: integer
+    RateLimitLimit:
+      description: Capacity of the active account-level rate-limit window.
+      schema:
+        type: integer
+    RetryAfter:
+      description: Seconds to wait before retrying.
+      schema:
+        type: integer
+        minimum: 1
+  schemas:
+    UploadURLEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          code:
+            type: integer
+            const: 200
+          msg:
+            type: string
+            const: success
+          data:
+            $ref: '#/components/schemas/UploadURLResponse'
+    DownloadURLResponse:
+      type: object
+      required:
+      - key
+      - url
+      - expiresAt
+      properties:
+        key:
+          type: string
+        url:
+          type: string
+          format: uri
+        expiresAt:
+          type: string
+          format: date-time
+    DownloadURLRequest:
+      type: object
+      required:
+      - taskId
+      additionalProperties: false
+      properties:
+        taskId:
+          type: string
+          minLength: 1
+        key:
+          type: string
+          description: Optional output key; empty selects the first output.
+    FileCommitEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          code:
+            type: integer
+            const: 200
+          msg:
+            type: string
+            const: success
+          data:
+            $ref: '#/components/schemas/FileCommitResponse'
+    EnvelopeBase:
+      type: object
+      required:
+      - code
+      - msg
+      - request_id
+      properties:
+        code:
+          type: integer
+        msg:
+          type: string
+        request_id:
+          type: string
+          description: Correlation identifier. Include it in support requests.
+    ErrorEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        properties:
+          code:
+            type: integer
+            enum:
+            - 400
+            - 40003
+            - 40004
+            - 401
+            - 40201
+            - 40202
+            - 403
+            - 40301
+            - 40302
+            - 40303
+            - 40310
+            - 404
+            - 409
+            - 40901
+            - 413
+            - 429
+            - 500
+            - 503
+            - 50301
+            - 50302
+            description: 'Business code. `40003`: an uploaded file''s actual size, media type or signature does not match its upload ticket (file commit). `40004`: the request is valid but no deployment can serve this exact parameter combination; change the named parameter and retry. `503`: a dependency is temporarily unavailable (for example a list or usage query timed out, or inline image storage failed); honour `Retry-After` when present. `50301`: the model has no usable deployment or effective price right now. `50302`: a synchronous generation (streaming) failed upstream and the charge was refunded. Retry with a **new** `Idempotency-Key` — the original key replays the same failure, so a transport-level retry that keeps the key can never succeed. `40301`: this key is not allowed to call this model — check the key''s model restrictions in the Console. `40302`: the caller''s address is not in this key''s IP allow-list. `40303`: the request comes from a region this service is not offered in; the message deliberately does not state how that is determined, and neither does this description. `40310`: the account has not verified its email address yet, so it cannot run models. Open the verification link that was emailed at sign-up, or send a new one from the Console; the key starts working as soon as the address is verified, with no change on your side.'
+          msg:
+            type: string
+            description: Human-readable explanation, English unless `Accept-Language` or the account's API error language selects another supported language. Never parse it; branch on `code`.
+    UploadURLResponse:
+      type: object
+      required:
+      - fileId
+      - key
+      - uploadUrl
+      - method
+      - headers
+      - expiresAt
+      - maxBytes
+      properties:
+        fileId:
+          type: string
+          pattern: ^fil_
+        key:
+          type: string
+          pattern: ^spicy://f/fil_
+          description: Compatibility alias for the final URI; unusable until commit succeeds.
+        uploadUrl:
+          type: string
+          format: uri
+        method:
+          type: string
+          const: PUT
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        expiresAt:
+          type: string
+          format: date-time
+        maxBytes:
+          type: integer
+          minimum: 1
+    DownloadURLEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          code:
+            type: integer
+            const: 200
+          msg:
+            type: string
+            const: success
+          data:
+            $ref: '#/components/schemas/DownloadURLResponse'
+    FileCommitResponse:
+      type: object
+      required:
+      - fileId
+      - status
+      - bytes
+      - contentType
+      - sha256
+      - uri
+      - expiresAt
+      properties:
+        fileId:
+          type: string
+          pattern: ^fil_
+        status:
+          type: string
+          const: ready
+        bytes:
+          type: integer
+          minimum: 1
+        contentType:
+          type: string
+          enum:
+          - image/jpeg
+          - image/png
+          - image/webp
+          - image/gif
+          - video/mp4
+          - video/webm
+          - audio/mpeg
+          - audio/wav
+          - application/pdf
+          - application/msword
+          - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+          - application/vnd.ms-excel
+          - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+          - application/vnd.ms-powerpoint
+          - application/vnd.openxmlformats-officedocument.presentationml.presentation
+          - application/vnd.apple.keynote
+          - application/vnd.apple.pages
+          - application/vnd.apple.numbers
+          - text/plain
+          - text/markdown
+        sha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        uri:
+          type: string
+          pattern: ^spicy://f/fil_
+        expiresAt:
+          type: string
+          format: date-time
+        durationSeconds:
+          type: string
+          description: Measured audio/video duration in seconds.
+        width:
+          type: integer
+          minimum: 0
+        height:
+          type: integer
+          minimum: 0
+    UploadURLRequest:
+      type: object
+      required:
+      - contentType
+      - bytes
+      additionalProperties: false
+      properties:
+        contentType:
+          type: string
+          enum:
+          - image/jpeg
+          - image/png
+          - image/webp
+          - image/gif
+          - video/mp4
+          - video/webm
+          - audio/mpeg
+          - audio/wav
+          - application/pdf
+          - application/msword
+          - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+          - application/vnd.ms-excel
+          - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+          - application/vnd.ms-powerpoint
+          - application/vnd.openxmlformats-officedocument.presentationml.presentation
+          - application/vnd.apple.keynote
+          - application/vnd.apple.pages
+          - application/vnd.apple.numbers
+          - text/plain
+          - text/markdown
+        bytes:
+          type: integer
+          minimum: 1
+          maximum: 94371840
+          description: Images are limited to 10 MiB; supported audio/video to 90 MiB.
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: sk-spicy-<48 lowercase hex characters>
+      description: 'Send `Authorization: Bearer sk-spicy-...`. Keep keys server-side.'
+x-refined-from:
+- spicyapi-openapi.yaml
+- spicyapi-openapi.yml

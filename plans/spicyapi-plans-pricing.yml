@@ -1,0 +1,15 @@
+name: SpicyAPI Pricing
+generated: '2026-10-09'
+method: searched
+source: https://spicyapi.ai/pricing
+audience: developer-api
+pricing_basis: usage-other
+published: true
+delivery:
+  delivery: managed
+plans:
+- name: Pay as you go
+  price_text: Pay as you go in US dollars, no subscription.
+  description: Per-model usage pricing across 153 models; credit balance topped up on the console Billing page.
+  features: [Free price quotes (quoteTask), Browsing models and prices is free]
+  limits: []

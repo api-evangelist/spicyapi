@@ -1,0 +1,118 @@
+# SpicyAPI Developer Documentation
+
+> SpicyAPI exposes image and video generation through an asynchronous task API, and text models through OpenAI-, Anthropic- and Gemini-compatible endpoints. This file lists the public integration documentation for humans and AI retrieval systems.
+
+## API contract and machine-readable files
+
+- Native task API: https://api.spicyapi.ai/api/v1 (authentication: Bearer API key in the Authorization header)
+- Text compatibility endpoints: https://api.spicyapi.ai/v1/chat/completions and https://api.spicyapi.ai/v1/responses (OpenAI format), https://api.spicyapi.ai/v1/messages (Anthropic format), https://api.spicyapi.ai/v1beta/models/{model}:generateContent (Gemini format)
+- Public model catalog, no key required: https://api.spicyapi.ai/console/v1/catalog/models (for evaluation; take callable model IDs from https://api.spicyapi.ai/api/v1/models with a key)
+- OpenAPI 3.1 contract: https://docs.spicyapi.ai/openapi.yaml
+- Short index: https://docs.spicyapi.ai/llms.txt
+- Full English corpus: https://docs.spicyapi.ai/llms-full.txt
+- Markdown of any page: https://docs.spicyapi.ai/docs/markdown/<slug> (other languages: https://docs.spicyapi.ai/<locale>/docs/markdown/<slug>)
+- Media lifecycle: create task -> webhook or polling -> download output
+
+## Official SDKs and integrations
+
+- @spicyapi/sdk (npm): TypeScript SDK, OpenAPI types and webhook helpers; source: https://github.com/spicyapi-ai/spicy-sdk
+- @spicyapi/cli (npm): standalone spicyapi command-line client; source: https://github.com/spicyapi-ai/spicy-cli
+- @spicyapi/mcp (npm): standalone stdio and loopback HTTP MCP servers; source: https://github.com/spicyapi-ai/spicy-mcp
+- @spicyapi/skill (npm): portable Agent Skill for compatible clients; not limited to Codex; source: https://github.com/spicyapi-ai/spicy-skill
+- Install the Skill: npx skills add spicyapi-ai/spicy-skill
+- spicyapi (PyPI, Python 3.11+, no runtime dependencies): pip install spicyapi; source: https://github.com/spicyapi-ai/spicy-python
+- github.com/spicyapi-ai/spicy-go (Go module, Go 1.23+, standard library only): go get github.com/spicyapi-ai/spicy-go; source: https://github.com/spicyapi-ai/spicy-go
+- spicyapi/spicyapi (Packagist, PHP 8.1+, no library dependencies): composer require spicyapi/spicyapi; source: https://github.com/spicyapi-ai/spicy-php
+- ai.spicyapi:spicyapi-java (Maven Central, Java 17+, Jackson only): add the ai.spicyapi:spicyapi-java dependency; source: https://github.com/spicyapi-ai/spicy-java
+- Source repositories: https://github.com/spicyapi-ai (official client libraries and developer tools, developed in the open)
+- Official X account: https://x.com/spicyapi_ai
+
+## English documentation
+
+Listed in the same order and groups as the documentation sidebar.
+
+### Get started
+
+- [How SpicyAPI works](https://docs.spicyapi.ai/docs/overview): What SpicyAPI is, what you can make with it, the five ways to use it with or without code, and the few ideas every other page builds on.
+- [Set up your account](https://docs.spicyapi.ai/docs/account-setup): Go from no account to a working API key in about fifteen minutes. Sign up, verify your email, add funds, create a key and make a free test call, with every screen explained.
+- [Quickstart](https://docs.spicyapi.ai/docs): Get a key, create a task, collect the result. The whole path, end to end.
+
+### Build with the API
+
+- [Authentication](https://docs.spicyapi.ai/docs/authentication): Key format, per-key restrictions, which tasks a key can see, and what to do the moment a key leaks.
+- [Model catalog and schemas](https://docs.spicyapi.ai/docs/models): Use the authenticated live catalog to select callable models, read their prices, and build requests from their current JSON Schema.
+- [Asynchronous tasks](https://docs.spicyapi.ai/docs/tasks): The createTask and recordInfo contracts, what each of the six states means, and how to choose between callbacks and polling.
+- [Media](https://docs.spicyapi.ai/docs/media): Presigned direct uploads for reference media, and short-lived download links for artefacts.
+- [Webhooks](https://docs.spicyapi.ai/docs/webhooks): Distinguish v1 and v2 webhook payloads, select the correct task ID, and verify signatures with working Node.js, Python, and curl examples.
+- [Idempotency](https://docs.spicyapi.ai/docs/idempotency): Retry after a timeout without generating twice or paying twice.
+- [Quotes and protocol compatibility](https://docs.spicyapi.ai/docs/quotes-and-compatibility): Get the exact price of a request before paying, submit it at that price, recover from a lost response, and know how the text and video compatibility APIs are priced.
+
+### Text and chat
+
+- [Text and streaming](https://docs.spicyapi.ai/docs/text-and-streaming): Call text models in the official OpenAI, Anthropic or Google Gemini format, and handle conversations, tools, streams and costs correctly.
+- [Chat recipes](https://docs.spicyapi.ai/docs/chat-recipes): Complete, runnable programs for multi-turn conversations, character role-play, streaming into your own interface and tool calling, in Python, Node.js and curl.
+- [Migrate from OpenAI or OpenRouter](https://docs.spicyapi.ai/docs/migrate-from-openai): Point existing OpenAI-library code at SpicyAPI. What changes (base URL, key, model ID), which request fields behave differently, and what to remove when you come from OpenRouter.
+
+### Guides
+
+- [Tutorial: turn a picture into a video](https://docs.spicyapi.ai/docs/guide-image-to-video): Start from one picture on your computer and finish with a downloaded video file. Every step shows the CLI, the TypeScript SDK and plain HTTP.
+- [Guide: generating and editing images](https://docs.spicyapi.ai/docs/guide-image-generation): How the image endpoints behave as a class — the two request shapes, the three ways output size is spelled, what a reference picture adds to the bill, adapter weights, and how to read a rejection.
+- [Subject swap](https://docs.spicyapi.ai/docs/subject-swap): One toolkit, two shapes. Single-call models replace a face or a head in one request; two-call models analyse a clip first so you can choose which person changes.
+- [Production integration](https://docs.spicyapi.ai/docs/production-integration): A launch checklist for a recoverable integration — the right model, protected keys and balance, confirmed costs, durable task tracking, reliable callbacks and the tests to run before going live.
+
+### SDKs
+
+- [TypeScript SDK](https://docs.spicyapi.ai/docs/sdk): A step-by-step guide to the TypeScript SDK @spicyapi/sdk — install it, get your first result, and look up every method, option and error in plain language. Python, Go, PHP and Java SDKs are documented on their own pages.
+- [Python SDK](https://docs.spicyapi.ai/docs/sdk-python): The official Python SDK for SpicyAPI (spicyapi) — install it, quote and run your first generation, upload a local file, verify webhooks and read every error code.
+- [Go SDK](https://docs.spicyapi.ai/docs/sdk-go): The official Go SDK for SpicyAPI (github.com/spicyapi-ai/spicy-go) — install it, quote and run your first generation, upload a local file, walk your task history and handle every error code.
+- [PHP SDK](https://docs.spicyapi.ai/docs/sdk-php): The official PHP SDK for SpicyAPI (spicyapi/spicyapi) — install it with Composer, quote and run your first generation, upload a local file, verify webhooks safely and handle every error code.
+- [Java SDK](https://docs.spicyapi.ai/docs/sdk-java): The official Java SDK for SpicyAPI (ai.spicyapi spicyapi-java) — install it, quote and run your first generation, upload a local file, verify callbacks and switch exhaustively over a sealed error taxonomy.
+
+### Agents and CLI
+
+- [Agents and automation](https://docs.spicyapi.ai/docs/agents): Which official tool to use, and a production runbook for AI agents, backend workers and repeatable media pipelines.
+- [Command-line tool (CLI)](https://docs.spicyapi.ai/docs/cli): Use the spicyapi command to browse models, check prices, generate images and videos and download the results from a terminal, without writing code.
+- [MCP server](https://docs.spicyapi.ai/docs/mcp): Connect Claude, Cursor, VS Code and other AI assistants to SpicyAPI, then browse models, compare prices, generate media and collect results by chatting — with every paid step confirmed by you.
+- [Agent Skill](https://docs.spicyapi.ai/docs/skill): A ready-made playbook for AI coding assistants. Install it once and your assistant builds SpicyAPI integrations the safe, correct way. What it is, what it changes, how to install it and how to check it works.
+
+### Apps and plugins
+
+- [ComfyUI nodes](https://docs.spicyapi.ai/docs/comfyui): Run SpicyAPI's image, video and audio models (Seedance, Kling, Wan, MiniMax H3, Suno, GPT Image, Nano Banana and more) as ComfyUI nodes. Install the node pack, add your key, run your first node and keep every run's cost in view.
+- [SillyTavern](https://docs.spicyapi.ai/docs/sillytavern): Chat with SpicyAPI models in SillyTavern through the Custom (OpenAI-compatible) source, then add the free SpicyAPI extension for pictures, videos and an Animate button, with every run priced first.
+- [Roleplay apps (RisuAI, Agnai, Chub, KoboldAI Lite, Janitor AI)](https://docs.spicyapi.ai/docs/roleplay-frontends): Connect SpicyAPI's text models to RisuAI, Agnai, Chub, KoboldAI Lite and Janitor AI. Exact fields for each app, which models suit roleplay, how to handle reasoning models, and how to cap spending.
+- [Telegram and Discord bot](https://docs.spicyapi.ai/docs/chat-bots): Run your own private bot that makes images and videos, animates pictures and chats with characters you define, paid from your SpicyAPI balance with spending limits checked before every charge.
+- [n8n](https://docs.spicyapi.ai/docs/n8n): Use SpicyAPI's image, video, audio and chat models in n8n workflows. Install the community node, import the HTTP Request templates, or point n8n's OpenAI credential at SpicyAPI for AI Agent nodes.
+
+### Account and billing
+
+- [Billing](https://docs.spicyapi.ai/docs/billing): Understand SpicyAPI’s pay-as-you-go USD billing: request quotes, holds, final charges, model-specific refusal terms, adding funds, spend caps and invoices.
+- [Console and teams](https://docs.spicyapi.ai/docs/console-workspaces): What every page of the SpicyAPI console does and when to use it, and how teams share API keys and spend limits while the team owner pays.
+- [Retention and destruction](https://docs.spicyapi.ai/docs/retention): What the platform caps are, how far down you can dial them, what shortening a setting does to content you already have, how to destroy a task's content, and what we cannot promise.
+
+### Reference
+
+- [OpenAPI and endpoint index](https://docs.spicyapi.ai/docs/api-reference): Downloadable OpenAPI 3.1 contract, every public endpoint with the guide that explains it, the shared request headers, and the production origin.
+- [Errors](https://docs.spicyapi.ai/docs/errors): Every business code, its HTTP status, what to do about it, and which retries are worth making.
+- [Rate limits](https://docs.spicyapi.ai/docs/limits): How the read and write request buckets work, what draws from each, the other limits you can run into, and why concurrency is a separate question.
+- [Spicy Schema contract](https://docs.spicyapi.ai/docs/schema): The shared request envelope, canonical fields, form schema, async lifecycle, errors, result storage and compatibility rules.
+- [Task commitment and retry](https://docs.spicyapi.ai/docs/task-actions): Why an accepted generation task cannot be canceled, and how failed or expired tasks are retried safely.
+
+### Help
+
+- [Troubleshooting and recovery](https://docs.spicyapi.ai/docs/troubleshooting): Find your symptom, see why it happens and what to do — payments, 401 and 403, balance and limits, unavailable models, failed or stuck tasks, uploads, callbacks and streams.
+- [FAQ](https://docs.spicyapi.ai/docs/faq): Short answers to the questions people ask most about SpicyAPI, from free tiers and failed-task charges to cancelling tasks, keeping results and fixing common errors.
+- [Glossary](https://docs.spicyapi.ai/docs/glossary): Every term these docs use, from API key to webhook, explained in plain words with what it means in SpicyAPI and where to read more.
+- [Content and usage responsibility](https://docs.spicyapi.ai/docs/policy): What SpicyAPI checks and what it doesn't, what you are responsible for, which uses are never allowed, where the service is available, and how to report abuse.
+
+## Support and status
+
+- API status: https://status.spicyapi.ai
+- Changelog: https://spicyapi.ai/changelog (Atom feed: https://spicyapi.ai/changelog/feed.xml)
+- Contact support: https://spicyapi.ai/contact or support@spicyapi.ai (include the request_id or task ID; never send an API key)
+
+## Languages
+
+Documentation is available in English (the source language), Japanese, Korean, German, French, Spanish, Brazilian Portuguese, Russian, Italian and Polish. English pages are at https://docs.spicyapi.ai/docs/…; other languages add their code as a prefix, for example https://docs.spicyapi.ai/ja/docs/….
+
+- Complete translations in all nine other languages: How SpicyAPI works; Set up your account; Quickstart; Authentication; Model catalog and schemas; Asynchronous tasks; Media; Webhooks; Idempotency; Quotes and protocol compatibility; Text and streaming; Chat recipes; Migrate from OpenAI or OpenRouter; Tutorial: turn a picture into a video; Guide: generating and editing images; Subject swap; Production integration; TypeScript SDK; Python SDK; Go SDK; PHP SDK; Java SDK; Agents and automation; Command-line tool (CLI); MCP server; Agent Skill; ComfyUI nodes; SillyTavern; Roleplay apps (RisuAI, Agnai, Chub, KoboldAI Lite, Janitor AI); Telegram and Discord bot; n8n; Billing; Console and teams; Retention and destruction; OpenAPI and endpoint index; Errors; Rate limits; Spicy Schema contract; Task commitment and retry; Troubleshooting and recovery; FAQ; Glossary; Content and usage responsibility.
+- Use the complete English page when a localized summary leaves out a detail.
