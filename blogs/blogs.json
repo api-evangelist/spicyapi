@@ -1,0 +1,14 @@
+{
+  "repo": "spicyapi",
+  "feeds": [
+    {
+      "source": "https://spicyapi.ai/blog",
+      "feed_url": "https://spicyapi.ai/blog/feed.xml",
+      "title": "",
+      "saved": 30,
+      "method": "discovered"
+    }
+  ],
+  "post_count": 30,
+  "fetched": "2026-10-10T13:15:00Z"
+}
