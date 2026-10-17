@@ -1,8 +1,8 @@
 openapi: 3.2.0
 info:
-  title: Spicyapi Models API
+  title: SpicyAPI Public Models API
   version: 1.0.0
-  description: 'Operations tagged Models across 2 of this provider''s published API definitions: spicyapi-openapi.yaml, spicyapi-openapi.yml. Each path carries the servers of the definition it was published in.'
+  description: Contract for the implemented `/api/v1` integration surface.
 servers:
 - url: https://api.spicyapi.ai
   description: Production
@@ -89,9 +89,6 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '500':
           $ref: '#/components/responses/ServerError'
-    servers:
-    - url: https://api.spicyapi.ai
-      description: Production
   /api/v1/models/{model}:
     get:
       tags:
@@ -135,9 +132,6 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '500':
           $ref: '#/components/responses/ServerError'
-    servers:
-    - url: https://api.spicyapi.ai
-      description: Production
   /console/v1/catalog/models:
     get:
       tags:
@@ -223,58 +217,36 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '500':
           $ref: '#/components/responses/ServerError'
-    servers:
-    - url: https://api.spicyapi.ai
-      description: Production
 components:
+  headers:
+    RetryAfter:
+      description: Seconds to wait before retrying.
+      schema:
+        type: integer
+        minimum: 1
+    RateLimitLimit:
+      description: Capacity of the active account-level rate-limit window.
+      schema:
+        type: integer
+    RateLimitRemaining:
+      description: Remaining requests in the active window.
+      schema:
+        type: integer
   schemas:
-    APIModelList:
+    EnvelopeBase:
       type: object
       required:
-      - total
-      - items
+      - code
+      - msg
+      - request_id
       properties:
-        total:
+        code:
           type: integer
-          minimum: 0
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/APIModel'
-    ModelEnvelope:
-      allOf:
-      - $ref: '#/components/schemas/EnvelopeBase'
-      - type: object
-        required:
-        - data
-        properties:
-          code:
-            type: integer
-            const: 200
-          msg:
-            type: string
-            const: success
-          data:
-            $ref: '#/components/schemas/APIModel'
-    USDString:
-      type: string
-      pattern: ^-?[0-9]+(?:\.[0-9]+)?$
-      description: Decimal USD amount encoded as a string to avoid binary floating-point loss.
-    PublicCatalogEnvelope:
-      allOf:
-      - $ref: '#/components/schemas/EnvelopeBase'
-      - type: object
-        required:
-        - data
-        properties:
-          code:
-            type: integer
-            const: 200
-          msg:
-            type: string
-            const: success
-          data:
-            $ref: '#/components/schemas/PublicCatalogList'
+        msg:
+          type: string
+        request_id:
+          type: string
+          description: Correlation identifier. Include it in support requests.
     PublicCatalogItem:
       type: object
       description: Evaluation view of one endpoint. Additional presentation fields are returned and documented in console-openapi.yaml.
@@ -357,20 +329,86 @@ components:
           - $ref: '#/components/schemas/PublicCatalogPrice'
           - type: 'null'
           description: Standard-rate starting price, or absent when the endpoint is not currently sellable. It is never reported as `0`.
-    EnvelopeBase:
+    APIModelList:
       type: object
       required:
-      - code
-      - msg
-      - request_id
+      - total
+      - items
       properties:
-        code:
+        total:
           type: integer
-        msg:
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/APIModel'
+    ModelEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          code:
+            type: integer
+            const: 200
+          msg:
+            type: string
+            const: success
+          data:
+            $ref: '#/components/schemas/APIModel'
+    APIModelPrice:
+      type: object
+      required:
+      - variant
+      - unit
+      - price
+      - currency
+      properties:
+        variant:
           type: string
-        request_id:
+          description: Price tier key. Empty when the model has a single price. When one input field sets the price, it is that field's value as is (for example `720p`). When several fields do, it is `field=value` pairs sorted by field name and joined with `;` (for example `duration=5;resolution=720p`), with values URL-encoded; `~` stands for an optional field that was not sent and has no default.
+        unit:
           type: string
-          description: Correlation identifier. Include it in support requests.
+          enum:
+          - per_image
+          - per_second
+          - per_request
+          - per_1k_tokens
+          - per_1k_characters
+        price:
+          $ref: '#/components/schemas/USDString'
+        regularPrice:
+          $ref: '#/components/schemas/USDString'
+        offerLabel:
+          type: string
+        offerPercent:
+          type: string
+        offerEndsAt:
+          type: string
+          format: date-time
+        currency:
+          type: string
+          const: USD
+        officialFallbackPrice:
+          allOf:
+          - $ref: '#/components/schemas/USDString'
+          description: 'Present only for models with an economy route. `price` is then the economy-route price and this is the same tier''s official price: the most a request is charged when `official_fallback` is `true` and the economy route fails.'
+    PublicCatalogEnvelope:
+      allOf:
+      - $ref: '#/components/schemas/EnvelopeBase'
+      - type: object
+        required:
+        - data
+        properties:
+          code:
+            type: integer
+            const: 200
+          msg:
+            type: string
+            const: success
+          data:
+            $ref: '#/components/schemas/PublicCatalogList'
     ErrorEnvelope:
       allOf:
       - $ref: '#/components/schemas/EnvelopeBase'
@@ -403,22 +441,89 @@ components:
           msg:
             type: string
             description: Human-readable explanation, English unless `Accept-Language` or the account's API error language selects another supported language. Never parse it; branch on `code`.
-    PublicCatalogList:
+    APIModelExample:
       type: object
       required:
-      - locale
-      - items
-      - total
+      - id
+      - input
+      - sortWeight
       properties:
-        locale:
+        id:
           type: string
-          description: The locale the copy was resolved to.
-        total:
+        input:
+          type: object
+          additionalProperties: true
+        sortWeight:
           type: integer
-        items:
+    PublicCatalogPrice:
+      type: object
+      required:
+      - amount
+      - unit
+      - tiers
+      properties:
+        amount:
+          type: string
+          description: Lowest tier's unit price as a decimal string. Decimal strings, not numbers, because these values are displayed and binary floats cannot represent them exactly.
+        unit:
+          type: string
+          description: Billing unit identifier, for example per_image or per_second.
+        variant:
+          type: string
+          description: The tier this price belongs to; absent when the model has one tier.
+        tiers:
+          type: integer
+          description: Number of currently effective tiers. Greater than one means this is a starting price.
+        regularAmount:
+          type: string
+          description: Pre-discount price
+          present only when a customer offer applies.: null
+        offerLabel:
+          type: string
+        offerPercent:
+          type: string
+        offerEndsAt:
+          type: string
+          format: date-time
+        perMillionTokens:
+          type: object
+          description: Standard per-million-token prices for text models.
+          required:
+          - input
+          - output
+          properties:
+            input:
+              type: string
+            cachedInput:
+              type: string
+            output:
+              type: string
+            cacheWrite:
+              type: string
+        listPrice:
+          type: object
+          description: The model creator's own published price, present only when ours is at least 1% lower. It is not our pre-discount price.
+        variants:
           type: array
+          description: 'Every priced tier of a per-second, per-image or per-request model, cheapest first (the first entry is the starting price). Absent for per-token models. `variant` is the raw tier key: a single value such as `720p`, or a compound key such as `generate_audio=false;resolution=1080p`.'
           items:
-            $ref: '#/components/schemas/PublicCatalogItem'
+            type: object
+            required:
+            - variant
+            - amount
+            - unit
+            properties:
+              variant:
+                type: string
+              amount:
+                type: string
+              regularAmount:
+                type: string
+              unit:
+                type: string
+              listPrice:
+                type: object
+                description: This tier's own reference price, under the same rules as listPrice above.
     APIModel:
       type: object
       required:
@@ -551,126 +656,10 @@ components:
         updatedAt:
           type: string
           format: date-time
-    APIModelExample:
-      type: object
-      required:
-      - id
-      - input
-      - sortWeight
-      properties:
-        id:
-          type: string
-        input:
-          type: object
-          additionalProperties: true
-        sortWeight:
-          type: integer
-    PublicCatalogPrice:
-      type: object
-      required:
-      - amount
-      - unit
-      - tiers
-      properties:
-        amount:
-          type: string
-          description: Lowest tier's unit price as a decimal string. Decimal strings, not numbers, because these values are displayed and binary floats cannot represent them exactly.
-        unit:
-          type: string
-          description: Billing unit identifier, for example per_image or per_second.
-        variant:
-          type: string
-          description: The tier this price belongs to; absent when the model has one tier.
-        tiers:
-          type: integer
-          description: Number of currently effective tiers. Greater than one means this is a starting price.
-        regularAmount:
-          type: string
-          description: Pre-discount price
-          present only when a customer offer applies.: null
-        offerLabel:
-          type: string
-        offerPercent:
-          type: string
-        offerEndsAt:
-          type: string
-          format: date-time
-        perMillionTokens:
-          type: object
-          description: Standard per-million-token prices for text models.
-          required:
-          - input
-          - output
-          properties:
-            input:
-              type: string
-            cachedInput:
-              type: string
-            output:
-              type: string
-            cacheWrite:
-              type: string
-        listPrice:
-          type: object
-          description: The model creator's own published price, present only when ours is at least 1% lower. It is not our pre-discount price.
-        variants:
-          type: array
-          description: 'Every priced tier of a per-second, per-image or per-request model, cheapest first (the first entry is the starting price). Absent for per-token models. `variant` is the raw tier key: a single value such as `720p`, or a compound key such as `generate_audio=false;resolution=1080p`.'
-          items:
-            type: object
-            required:
-            - variant
-            - amount
-            - unit
-            properties:
-              variant:
-                type: string
-              amount:
-                type: string
-              regularAmount:
-                type: string
-              unit:
-                type: string
-              listPrice:
-                type: object
-                description: This tier's own reference price, under the same rules as listPrice above.
-    APIModelPrice:
-      type: object
-      required:
-      - variant
-      - unit
-      - price
-      - currency
-      properties:
-        variant:
-          type: string
-          description: Price tier key. Empty when the model has a single price. When one input field sets the price, it is that field's value as is (for example `720p`). When several fields do, it is `field=value` pairs sorted by field name and joined with `;` (for example `duration=5;resolution=720p`), with values URL-encoded; `~` stands for an optional field that was not sent and has no default.
-        unit:
-          type: string
-          enum:
-          - per_image
-          - per_second
-          - per_request
-          - per_1k_tokens
-          - per_1k_characters
-        price:
-          $ref: '#/components/schemas/USDString'
-        regularPrice:
-          $ref: '#/components/schemas/USDString'
-        offerLabel:
-          type: string
-        offerPercent:
-          type: string
-        offerEndsAt:
-          type: string
-          format: date-time
-        currency:
-          type: string
-          const: USD
-        officialFallbackPrice:
-          allOf:
-          - $ref: '#/components/schemas/USDString'
-          description: 'Present only for models with an economy route. `price` is then the economy-route price and this is the same tier''s official price: the most a request is charged when `official_fallback` is `true` and the economy route fails.'
+    USDString:
+      type: string
+      pattern: ^-?[0-9]+(?:\.[0-9]+)?$
+      description: Decimal USD amount encoded as a string to avoid binary floating-point loss.
     ModelListEnvelope:
       allOf:
       - $ref: '#/components/schemas/EnvelopeBase'
@@ -686,33 +675,23 @@ components:
             const: success
           data:
             $ref: '#/components/schemas/APIModelList'
-  headers:
-    RateLimitRemaining:
-      description: Remaining requests in the active window.
-      schema:
-        type: integer
-    RateLimitLimit:
-      description: Capacity of the active account-level rate-limit window.
-      schema:
-        type: integer
-    RetryAfter:
-      description: Seconds to wait before retrying.
-      schema:
-        type: integer
-        minimum: 1
+    PublicCatalogList:
+      type: object
+      required:
+      - locale
+      - items
+      - total
+      properties:
+        locale:
+          type: string
+          description: The locale the copy was resolved to.
+        total:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicCatalogItem'
   responses:
-    Unauthorized:
-      description: Missing, malformed, expired, revoked, or otherwise invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
-    BadRequest:
-      description: Invalid JSON, query, callback URL, model input, or media declaration. Invalid callBackUrl values return code 400 and msg "Invalid callback URL" with request_id. Submitted hosts, IP addresses, and DNS diagnostics are not echoed.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
     RateLimited:
       description: Account-level request limit exceeded.
       headers:
@@ -726,14 +705,26 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorEnvelope'
-    ServerError:
-      description: Internal failure. Details are not exposed; report `request_id` to support.
+    Unauthorized:
+      description: Missing, malformed, expired, revoked, or otherwise invalid API key.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorEnvelope'
     Forbidden:
       description: Account, model, API-key, IP, or region authorization failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    BadRequest:
+      description: Invalid JSON, query, callback URL, model input, or media declaration. Invalid callBackUrl values return code 400 and msg "Invalid callback URL" with request_id. Submitted hosts, IP addresses, and DNS diagnostics are not echoed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ServerError:
+      description: Internal failure. Details are not exposed; report `request_id` to support.
       content:
         application/json:
           schema:
@@ -750,6 +741,3 @@ components:
       scheme: bearer
       bearerFormat: sk-spicy-<48 lowercase hex characters>
       description: 'Send `Authorization: Bearer sk-spicy-...`. Keep keys server-side.'
-x-refined-from:
-- spicyapi-openapi.yaml
-- spicyapi-openapi.yml

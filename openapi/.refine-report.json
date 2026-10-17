@@ -1,8 +1,7 @@
 {
   "provider": "spicyapi",
   "sources": [
-    "_original/spicyapi-openapi.yaml",
-    "spicyapi-openapi.yml"
+    "_original/spicyapi-openapi.yaml"
   ],
   "outputs": [
     "spicyapi-account-api-openapi.yml",
@@ -11,21 +10,21 @@
     "spicyapi-openai-compatible-api-openapi.yml",
     "spicyapi-tasks-api-openapi.yml"
   ],
-  "archived": [
-    "archived openapi/spicyapi-openapi.yml"
-  ],
+  "archived": [],
   "errors": [],
   "warnings": [],
   "notes": [
+    "1 archived document(s) dropped as subsets of other archived documents",
     "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
     "spicyapi-openapi.yaml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
-    "spicyapi-openapi.yml: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
-    "tag 'Account' spans 2 source specs (spicyapi-openapi.yaml, spicyapi-openapi.yml): per-path servers applied",
-    "tag 'Media' spans 2 source specs (spicyapi-openapi.yaml, spicyapi-openapi.yml): per-path servers applied",
-    "tag 'Models' spans 2 source specs (spicyapi-openapi.yaml, spicyapi-openapi.yml): per-path servers applied",
-    "tag 'OpenAI Compatible' spans 2 source specs (spicyapi-openapi.yaml, spicyapi-openapi.yml): per-path servers applied",
-    "tag 'Tasks' spans 2 source specs (spicyapi-openapi.yaml, spicyapi-openapi.yml): per-path servers applied",
-    "apis.yml register: written (+5 apis, 5 total)"
+    "apis.yml register: already-registered"
   ],
-  "skipped": []
+  "skipped": [
+    "_original/spicyapi-openapi.yml: archived document superseded by a larger archived document",
+    "spicyapi-account-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "spicyapi-media-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "spicyapi-models-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "spicyapi-openai-compatible-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "spicyapi-tasks-api-openapi.yml: previously refined output, superseded by openapi/_original/"
+  ]
 }

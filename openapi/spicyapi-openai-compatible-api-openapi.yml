@@ -1,8 +1,8 @@
 openapi: 3.2.0
 info:
-  title: Spicyapi OpenAI Compatible API
+  title: SpicyAPI Public OpenAI Compatible API
   version: 1.0.0
-  description: 'Operations tagged OpenAI Compatible across 2 of this provider''s published API definitions: spicyapi-openapi.yaml, spicyapi-openapi.yml. Each path carries the servers of the definition it was published in.'
+  description: Contract for the implemented `/api/v1` integration surface.
 servers:
 - url: https://api.spicyapi.ai
   description: Production
@@ -65,9 +65,6 @@ paths:
           $ref: '#/components/responses/OpenAIError'
         '503':
           $ref: '#/components/responses/OpenAIError'
-    servers:
-    - url: https://api.spicyapi.ai
-      description: Production
   /v1/chat/completions:
     post:
       tags:
@@ -219,9 +216,6 @@ paths:
           $ref: '#/components/responses/OpenAIError'
         '503':
           $ref: '#/components/responses/OpenAIError'
-    servers:
-    - url: https://api.spicyapi.ai
-      description: Production
   /v1/responses:
     post:
       tags:
@@ -303,9 +297,6 @@ paths:
           $ref: '#/components/responses/OpenAIError'
         '503':
           $ref: '#/components/responses/OpenAIError'
-    servers:
-    - url: https://api.spicyapi.ai
-      description: Production
   /v1/messages:
     post:
       tags:
@@ -380,9 +371,6 @@ paths:
           $ref: '#/components/responses/AnthropicError'
         '503':
           $ref: '#/components/responses/AnthropicError'
-    servers:
-    - url: https://api.spicyapi.ai
-      description: Production
   /v1beta/models/{model}:generateContent:
     post:
       tags:
@@ -463,9 +451,6 @@ paths:
           $ref: '#/components/responses/GeminiError'
         '503':
           $ref: '#/components/responses/GeminiError'
-    servers:
-    - url: https://api.spicyapi.ai
-      description: Production
   /v1beta/models/{model}:streamGenerateContent:
     post:
       tags:
@@ -538,9 +523,6 @@ paths:
           $ref: '#/components/responses/GeminiError'
         '503':
           $ref: '#/components/responses/GeminiError'
-    servers:
-    - url: https://api.spicyapi.ai
-      description: Production
   /v1/videos:
     post:
       tags:
@@ -599,9 +581,6 @@ paths:
           $ref: '#/components/responses/OpenAIError'
         '503':
           $ref: '#/components/responses/OpenAIError'
-    servers:
-    - url: https://api.spicyapi.ai
-      description: Production
   /v1/videos/{videoId}:
     get:
       tags:
@@ -640,9 +619,6 @@ paths:
           $ref: '#/components/responses/OpenAIError'
         '503':
           $ref: '#/components/responses/OpenAIError'
-    servers:
-    - url: https://api.spicyapi.ai
-      description: Production
   /v1/videos/{videoId}/content:
     get:
       tags:
@@ -689,22 +665,48 @@ paths:
           $ref: '#/components/responses/OpenAIError'
         '503':
           $ref: '#/components/responses/OpenAIError'
-    servers:
-    - url: https://api.spicyapi.ai
-      description: Production
 components:
-  headers:
-    SpicyTaskId:
-      description: The SpicyAPI task (`job_…`) that ran this synchronous text request — the same `taskId` that `GET /api/v1/jobs` and `recordInfo` return, so a call can be matched to its charge. Set as soon as the request is accepted, including on error responses returned after acceptance (the task shows the refund). Absent when the request was rejected before a task was created (for example a validation error), and on a streamed response whose headers were already flushed by a keep-alive before acceptance.
-      schema:
-        type: string
-    SpicyKeepalive:
-      description: Present, with the value `1`, only on a non-streaming text response that was still running after about 30 seconds. The `200` status was sent early to keep the connection open, the body starts with whitespace (newlines sent every 15 seconds), and then comes the JSON answer — or, if the request failed after that point, the protocol's own error object with the code and message it would otherwise have had. Absent on responses that finished sooner, which are unchanged.
-      schema:
-        type: string
-        enum:
-        - '1'
   schemas:
+    ResponsesRequest:
+      type: object
+      required:
+      - model
+      - input
+      properties:
+        model:
+          type: string
+        input:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: object
+        instructions:
+          type: string
+        max_output_tokens:
+          type: integer
+        temperature:
+          type: number
+        top_p:
+          type: number
+        tools:
+          type: array
+          items:
+            type: object
+        tool_choice:
+          oneOf:
+          - type: string
+          - type: object
+        text:
+          type: object
+        reasoning:
+          type: object
+          properties:
+            effort:
+              type: string
+        stream:
+          type: boolean
+          default: false
     OpenAIModelList:
       type: object
       required:
@@ -760,6 +762,289 @@ components:
                 items:
                   type: string
                 description: 'SpicyAPI extension, chat models only. Request fields this model accepts (the top-level fields of its input schema). `stream`, `stream_options`, `user`, `metadata` and `store` are handled by the compatible layer for every model and are not listed. Any other field returns `400` with `code: unsupported_parameter`.'
+    AnthropicMessageRequest:
+      type: object
+      required:
+      - model
+      - messages
+      - max_tokens
+      properties:
+        model:
+          type: string
+        system:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: object
+        messages:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+            - role
+            - content
+            properties:
+              role:
+                type: string
+                enum:
+                - user
+                - assistant
+              content:
+                oneOf:
+                - type: string
+                - type: array
+                  items:
+                    type: object
+        max_tokens:
+          type: integer
+        temperature:
+          type: number
+        top_p:
+          type: number
+        top_k:
+          type: integer
+        stop_sequences:
+          type: array
+          items:
+            type: string
+        tools:
+          type: array
+          items:
+            type: object
+        tool_choice:
+          type: object
+          description: '`disable_parallel_tool_use: true` is translated to `parallel_tool_calls: false`.'
+        stream:
+          type: boolean
+          default: false
+    AnthropicErrorBody:
+      type: object
+      required:
+      - type
+      - error
+      properties:
+        type:
+          type: string
+          const: error
+        error:
+          type: object
+          required:
+          - type
+          - message
+          properties:
+            type:
+              type: string
+              enum:
+              - invalid_request_error
+              - authentication_error
+              - billing_error
+              - permission_error
+              - not_found_error
+              - request_too_large
+              - rate_limit_error
+              - api_error
+              - overloaded_error
+            message:
+              type: string
+            code:
+              type: string
+              description: 'SpicyAPI extension: the same stable reason as `error.code` in the OpenAI shape (for example `content_rejected`, `unsupported_parameter`, `invalid_request`). Official Anthropic SDKs ignore it; read it from the raw error body to tell a content-policy refusal from a bad parameter.'
+    GeminiErrorBody:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          - status
+          properties:
+            code:
+              type: integer
+            message:
+              type: string
+            status:
+              type: string
+            details:
+              type: array
+              description: 'One `google.rpc.ErrorInfo` whose `reason` is the upper-case form of the OpenAI-shape `error.code` (for example `CONTENT_REJECTED`, `UNSUPPORTED_PARAMETER`, `INVALID_REQUEST`) and whose `domain` is `api.spicyapi.ai`. `status` alone cannot tell a content-policy refusal from a bad parameter: both are `INVALID_ARGUMENT`.'
+              items:
+                type: object
+                required:
+                - '@type'
+                - reason
+                - domain
+                properties:
+                  '@type':
+                    type: string
+                    const: type.googleapis.com/google.rpc.ErrorInfo
+                  reason:
+                    type: string
+                  domain:
+                    type: string
+    GeminiGenerateContentRequest:
+      type: object
+      required:
+      - contents
+      description: Google Gemini `generateContent` request. Which generation parameters a model accepts comes from that model's `inputSchema` in `/v1/models` and the catalog. Sampling parameters the model does not declare (temperature, topP, topK, penalties) are ignored and listed in the `X-Spicy-Ignored-Params` response header; any other unsupported parameter returns 400.
+      properties:
+        contents:
+          type: array
+          items:
+            type: object
+            properties:
+              role:
+                type: string
+                enum:
+                - user
+                - model
+              parts:
+                type: array
+                items:
+                  type: object
+                  description: One of `text`, `inlineData {mimeType,data}`, `fileData {mimeType,fileUri}`, `functionCall {name,args}`, `functionResponse {name,response}`.
+        systemInstruction:
+          type: object
+        tools:
+          type: array
+          items:
+            type: object
+        toolConfig:
+          type: object
+        generationConfig:
+          type: object
+          properties:
+            temperature:
+              type: number
+            topP:
+              type: number
+            maxOutputTokens:
+              type: integer
+            stopSequences:
+              type: array
+              items:
+                type: string
+            responseMimeType:
+              type: string
+            responseSchema:
+              type: object
+            thinkingConfig:
+              type: object
+    VideoCreateRequest:
+      type: object
+      required:
+      - model
+      - prompt
+      additionalProperties: false
+      properties:
+        model:
+          type: string
+          description: Video endpoint identifier from `/v1/models`.
+        prompt:
+          type: string
+        input_reference:
+          type: string
+          description: Reference image URL; mapped to the model's `image_url` / `image_urls`.
+        seconds:
+          oneOf:
+          - type: string
+          - type: integer
+          description: Clip length in seconds; mapped to `duration_seconds`.
+        size:
+          type: string
+          pattern: ^[0-9]+x[0-9]+$
+          description: WIDTHxHEIGHT, mapped to `resolution` / `aspect_ratio` (or `width` / `height`).
+    OpenAIErrorBody:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - message
+          - type
+          - code
+          properties:
+            message:
+              type: string
+            type:
+              type: string
+              enum:
+              - invalid_request_error
+              - authentication_error
+              - permission_error
+              - insufficient_quota
+              - rate_limit_error
+              - server_error
+            param:
+              type:
+              - string
+              - 'null'
+              description: The request field the error is about, as a dot path (for example `temperature`, `messages.1.content.0`, `stream_options.include_usage`). `null` when the error is not about a single field.
+            code:
+              type: string
+              description: Stable machine-readable reason, for example `invalid_request`, `unsupported_parameter` (the model does not accept this field, value or message part), `content_rejected` (the model's content policy refused the request; HTTP 400, and retrying the same input will be refused again), `model_not_found`, `invalid_api_key`, `insufficient_balance`, `model_not_allowed`, `model_unavailable`, `rate_limit_exceeded`, `upstream_failed`.
+    AnthropicMessage:
+      type: object
+      required:
+      - id
+      - type
+      - role
+      - model
+      - content
+      - stop_reason
+      - usage
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          const: message
+        role:
+          type: string
+          const: assistant
+        model:
+          type: string
+        content:
+          type: array
+          items:
+            type: object
+            required:
+            - type
+            properties:
+              type:
+                type: string
+                enum:
+                - text
+                - tool_use
+              text:
+                type: string
+              id:
+                type: string
+              name:
+                type: string
+              input:
+                type: object
+        stop_reason:
+          type: string
+          enum:
+          - end_turn
+          - max_tokens
+          - tool_use
+        stop_sequence:
+          type: 'null'
+        usage:
+          type: object
+          properties:
+            input_tokens:
+              type: integer
+            output_tokens:
+              type: integer
     ChatCompletion:
       type: object
       required:
@@ -836,85 +1121,175 @@ components:
                 reasoning_tokens:
                   type: integer
                   description: Included in completion_tokens; do not add it again when calculating usage.
-    GeminiGenerateContentRequest:
+    Video:
       type: object
       required:
-      - contents
-      description: Google Gemini `generateContent` request. Which generation parameters a model accepts comes from that model's `inputSchema` in `/v1/models` and the catalog. Sampling parameters the model does not declare (temperature, topP, topK, penalties) are ignored and listed in the `X-Spicy-Ignored-Params` response header; any other unsupported parameter returns 400.
+      - id
+      - object
+      - model
+      - status
+      - progress
+      - created_at
       properties:
-        contents:
+        id:
+          type: string
+          description: Task identifier; also accepted by `/api/v1/jobs/recordInfo`.
+        object:
+          type: string
+          const: video
+        model:
+          type: string
+        status:
+          type: string
+          enum:
+          - queued
+          - in_progress
+          - completed
+          - failed
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 100 when completed
+          otherwise 0; no fabricated intermediate values.: null
+        created_at:
+          type: integer
+        completed_at:
+          type: integer
+        seconds:
+          type: string
+        size:
+          type: string
+        error:
+          type: object
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+    GeminiGenerateContentResponse:
+      type: object
+      properties:
+        candidates:
           type: array
           items:
             type: object
             properties:
+              index:
+                type: integer
+              content:
+                type: object
+                properties:
+                  role:
+                    type: string
+                  parts:
+                    type: array
+                    items:
+                      type: object
+              finishReason:
+                type: string
+        usageMetadata:
+          type: object
+          properties:
+            promptTokenCount:
+              type: integer
+            candidatesTokenCount:
+              type: integer
+            totalTokenCount:
+              type: integer
+            cachedContentTokenCount:
+              type: integer
+            thoughtsTokenCount:
+              type: integer
+        modelVersion:
+          type: string
+          description: The SpicyAPI model identifier.
+        responseId:
+          type: string
+    ChatCompletionRequest:
+      type: object
+      required:
+      - model
+      - messages
+      properties:
+        model:
+          type: string
+        messages:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+            - role
+            properties:
               role:
                 type: string
-                enum:
-                - user
-                - model
-              parts:
+              content:
+                oneOf:
+                - type:
+                  - string
+                  - 'null'
+                - type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+              tool_call_id:
+                type: string
+              tool_calls:
                 type: array
                 items:
                   type: object
-                  description: One of `text`, `inlineData {mimeType,data}`, `fileData {mimeType,fileUri}`, `functionCall {name,args}`, `functionResponse {name,response}`.
-        systemInstruction:
-          type: object
+                  additionalProperties: true
+              reasoning_content:
+                type: string
+                description: Optional assistant reasoning text; availability and message roles follow the selected model input schema.
+            additionalProperties: true
+        stream:
+          type: boolean
+          default: false
+        max_tokens:
+          type: integer
+        max_completion_tokens:
+          type: integer
+          description: Alias of `max_tokens`.
+        temperature:
+          type: number
+        top_p:
+          type: number
+        top_k:
+          type: integer
+          description: Sample only from the k most likely next tokens; only on models that declare it.
+        seed:
+          type: integer
+          description: Best-effort repeatable sampling; only on models that declare it.
+        stop:
+          description: Up to 4 stop sequences (some models accept only one); only on models that declare it.
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: string
         tools:
           type: array
           items:
             type: object
-        toolConfig:
+            additionalProperties: true
+        tool_choice:
+          oneOf:
+          - type: string
+          - type: object
+            additionalProperties: true
+        parallel_tool_calls:
+          type: boolean
+          description: Set false to allow at most one tool call per turn; only on models that declare it.
+        response_format:
           type: object
-        generationConfig:
-          type: object
-          properties:
-            temperature:
-              type: number
-            topP:
-              type: number
-            maxOutputTokens:
-              type: integer
-            stopSequences:
-              type: array
-              items:
-                type: string
-            responseMimeType:
-              type: string
-            responseSchema:
-              type: object
-            thinkingConfig:
-              type: object
-    OpenAIErrorBody:
-      type: object
-      required:
-      - error
-      properties:
-        error:
-          type: object
-          required:
-          - message
-          - type
-          - code
-          properties:
-            message:
-              type: string
-            type:
-              type: string
-              enum:
-              - invalid_request_error
-              - authentication_error
-              - permission_error
-              - insufficient_quota
-              - rate_limit_error
-              - server_error
-            param:
-              type:
-              - string
-              - 'null'
-              description: The request field the error is about, as a dot path (for example `temperature`, `messages.1.content.0`, `stream_options.include_usage`). `null` when the error is not about a single field.
-            code:
-              type: string
-              description: Stable machine-readable reason, for example `invalid_request`, `unsupported_parameter` (the model does not accept this field, value or message part), `content_rejected` (the model's content policy refused the request; HTTP 400, and retrying the same input will be refused again), `model_not_found`, `invalid_api_key`, `insufficient_balance`, `model_not_allowed`, `model_unavailable`, `rate_limit_exceeded`, `upstream_failed`.
+          additionalProperties: true
+      additionalProperties:
+        description: Forwarded to the model input schema and rejected when undeclared.
     ResponseObject:
       type: object
       required:
@@ -998,420 +1373,34 @@ components:
               type: integer
             total_tokens:
               type: integer
-    VideoCreateRequest:
-      type: object
-      required:
-      - model
-      - prompt
-      additionalProperties: false
-      properties:
-        model:
-          type: string
-          description: Video endpoint identifier from `/v1/models`.
-        prompt:
-          type: string
-        input_reference:
-          type: string
-          description: Reference image URL; mapped to the model's `image_url` / `image_urls`.
-        seconds:
-          oneOf:
-          - type: string
-          - type: integer
-          description: Clip length in seconds; mapped to `duration_seconds`.
-        size:
-          type: string
-          pattern: ^[0-9]+x[0-9]+$
-          description: WIDTHxHEIGHT, mapped to `resolution` / `aspect_ratio` (or `width` / `height`).
-    ResponsesRequest:
-      type: object
-      required:
-      - model
-      - input
-      properties:
-        model:
-          type: string
-        input:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: object
-        instructions:
-          type: string
-        max_output_tokens:
-          type: integer
-        temperature:
-          type: number
-        top_p:
-          type: number
-        tools:
-          type: array
-          items:
-            type: object
-        tool_choice:
-          oneOf:
-          - type: string
-          - type: object
-        text:
-          type: object
-        reasoning:
-          type: object
-          properties:
-            effort:
-              type: string
-        stream:
-          type: boolean
-          default: false
-    GeminiErrorBody:
-      type: object
-      required:
-      - error
-      properties:
-        error:
-          type: object
-          required:
-          - code
-          - message
-          - status
-          properties:
-            code:
-              type: integer
-            message:
-              type: string
-            status:
-              type: string
-            details:
-              type: array
-              description: 'One `google.rpc.ErrorInfo` whose `reason` is the upper-case form of the OpenAI-shape `error.code` (for example `CONTENT_REJECTED`, `UNSUPPORTED_PARAMETER`, `INVALID_REQUEST`) and whose `domain` is `api.spicyapi.ai`. `status` alone cannot tell a content-policy refusal from a bad parameter: both are `INVALID_ARGUMENT`.'
-              items:
-                type: object
-                required:
-                - '@type'
-                - reason
-                - domain
-                properties:
-                  '@type':
-                    type: string
-                    const: type.googleapis.com/google.rpc.ErrorInfo
-                  reason:
-                    type: string
-                  domain:
-                    type: string
-    ChatCompletionRequest:
-      type: object
-      required:
-      - model
-      - messages
-      properties:
-        model:
-          type: string
-        messages:
-          type: array
-          minItems: 1
-          items:
-            type: object
-            required:
-            - role
-            properties:
-              role:
-                type: string
-              content:
-                oneOf:
-                - type:
-                  - string
-                  - 'null'
-                - type: array
-                  items:
-                    type: object
-                    additionalProperties: true
-              tool_call_id:
-                type: string
-              tool_calls:
-                type: array
-                items:
-                  type: object
-                  additionalProperties: true
-              reasoning_content:
-                type: string
-                description: Optional assistant reasoning text; availability and message roles follow the selected model input schema.
-            additionalProperties: true
-        stream:
-          type: boolean
-          default: false
-        max_tokens:
-          type: integer
-        max_completion_tokens:
-          type: integer
-          description: Alias of `max_tokens`.
-        temperature:
-          type: number
-        top_p:
-          type: number
-        top_k:
-          type: integer
-          description: Sample only from the k most likely next tokens; only on models that declare it.
-        seed:
-          type: integer
-          description: Best-effort repeatable sampling; only on models that declare it.
-        stop:
-          description: Up to 4 stop sequences (some models accept only one); only on models that declare it.
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: string
-        tools:
-          type: array
-          items:
-            type: object
-            additionalProperties: true
-        tool_choice:
-          oneOf:
-          - type: string
-          - type: object
-            additionalProperties: true
-        parallel_tool_calls:
-          type: boolean
-          description: Set false to allow at most one tool call per turn; only on models that declare it.
-        response_format:
-          type: object
-          additionalProperties: true
-      additionalProperties:
-        description: Forwarded to the model input schema and rejected when undeclared.
-    GeminiGenerateContentResponse:
-      type: object
-      properties:
-        candidates:
-          type: array
-          items:
-            type: object
-            properties:
-              index:
-                type: integer
-              content:
-                type: object
-                properties:
-                  role:
-                    type: string
-                  parts:
-                    type: array
-                    items:
-                      type: object
-              finishReason:
-                type: string
-        usageMetadata:
-          type: object
-          properties:
-            promptTokenCount:
-              type: integer
-            candidatesTokenCount:
-              type: integer
-            totalTokenCount:
-              type: integer
-            cachedContentTokenCount:
-              type: integer
-            thoughtsTokenCount:
-              type: integer
-        modelVersion:
-          type: string
-          description: The SpicyAPI model identifier.
-        responseId:
-          type: string
-    AnthropicMessageRequest:
-      type: object
-      required:
-      - model
-      - messages
-      - max_tokens
-      properties:
-        model:
-          type: string
-        system:
-          oneOf:
-          - type: string
-          - type: array
-            items:
-              type: object
-        messages:
-          type: array
-          minItems: 1
-          items:
-            type: object
-            required:
-            - role
-            - content
-            properties:
-              role:
-                type: string
-                enum:
-                - user
-                - assistant
-              content:
-                oneOf:
-                - type: string
-                - type: array
-                  items:
-                    type: object
-        max_tokens:
-          type: integer
-        temperature:
-          type: number
-        top_p:
-          type: number
-        top_k:
-          type: integer
-        stop_sequences:
-          type: array
-          items:
-            type: string
-        tools:
-          type: array
-          items:
-            type: object
-        tool_choice:
-          type: object
-          description: '`disable_parallel_tool_use: true` is translated to `parallel_tool_calls: false`.'
-        stream:
-          type: boolean
-          default: false
-    AnthropicMessage:
-      type: object
-      required:
-      - id
-      - type
-      - role
-      - model
-      - content
-      - stop_reason
-      - usage
-      properties:
-        id:
-          type: string
-        type:
-          type: string
-          const: message
-        role:
-          type: string
-          const: assistant
-        model:
-          type: string
-        content:
-          type: array
-          items:
-            type: object
-            required:
-            - type
-            properties:
-              type:
-                type: string
-                enum:
-                - text
-                - tool_use
-              text:
-                type: string
-              id:
-                type: string
-              name:
-                type: string
-              input:
-                type: object
-        stop_reason:
-          type: string
-          enum:
-          - end_turn
-          - max_tokens
-          - tool_use
-        stop_sequence:
-          type: 'null'
-        usage:
-          type: object
-          properties:
-            input_tokens:
-              type: integer
-            output_tokens:
-              type: integer
-    Video:
-      type: object
-      required:
-      - id
-      - object
-      - model
-      - status
-      - progress
-      - created_at
-      properties:
-        id:
-          type: string
-          description: Task identifier; also accepted by `/api/v1/jobs/recordInfo`.
-        object:
-          type: string
-          const: video
-        model:
-          type: string
-        status:
-          type: string
-          enum:
-          - queued
-          - in_progress
-          - completed
-          - failed
-        progress:
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: 100 when completed
-          otherwise 0; no fabricated intermediate values.: null
-        created_at:
-          type: integer
-        completed_at:
-          type: integer
-        seconds:
-          type: string
-        size:
-          type: string
-        error:
-          type: object
-          required:
-          - code
-          - message
-          properties:
-            code:
-              type: string
-            message:
-              type: string
-    AnthropicErrorBody:
-      type: object
-      required:
-      - type
-      - error
-      properties:
-        type:
-          type: string
-          const: error
-        error:
-          type: object
-          required:
-          - type
-          - message
-          properties:
-            type:
-              type: string
-              enum:
-              - invalid_request_error
-              - authentication_error
-              - billing_error
-              - permission_error
-              - not_found_error
-              - request_too_large
-              - rate_limit_error
-              - api_error
-              - overloaded_error
-            message:
-              type: string
-            code:
-              type: string
-              description: 'SpicyAPI extension: the same stable reason as `error.code` in the OpenAI shape (for example `content_rejected`, `unsupported_parameter`, `invalid_request`). Official Anthropic SDKs ignore it; read it from the raw error body to tell a content-policy refusal from a bad parameter.'
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: Stable key for one logical task submission; retained for 24 hours per account and bound to both the submitting API key and normalized request fingerprint. A sibling key receives 409 without the original task ID.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+  headers:
+    SpicyKeepalive:
+      description: Present, with the value `1`, only on a non-streaming text response that was still running after about 30 seconds. The `200` status was sent early to keep the connection open, the body starts with whitespace (newlines sent every 15 seconds), and then comes the JSON answer — or, if the request failed after that point, the protocol's own error object with the code and message it would otherwise have had. Absent on responses that finished sooner, which are unchanged.
+      schema:
+        type: string
+        enum:
+        - '1'
+    SpicyTaskId:
+      description: The SpicyAPI task (`job_…`) that ran this synchronous text request — the same `taskId` that `GET /api/v1/jobs` and `recordInfo` return, so a call can be matched to its charge. Set as soon as the request is accepted, including on error responses returned after acceptance (the task shows the refund). Absent when the request was rejected before a task was created (for example a validation error), and on a streamed response whose headers were already flushed by a keep-alive before acceptance.
+      schema:
+        type: string
   responses:
+    AnthropicError:
+      description: Error in the Anthropic `{type:"error",error:{type,message}}` shape.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AnthropicErrorBody'
     GeminiError:
       description: Error in the Google `{error:{code,message,status}}` shape. `status` is the google.rpc code name (for example `INVALID_ARGUMENT`, `UNAUTHENTICATED`, `RESOURCE_EXHAUSTED`).
       content:
@@ -1424,28 +1413,9 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/OpenAIErrorBody'
-    AnthropicError:
-      description: Error in the Anthropic `{type:"error",error:{type,message}}` shape.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/AnthropicErrorBody'
-  parameters:
-    IdempotencyKey:
-      name: Idempotency-Key
-      in: header
-      required: false
-      description: Stable key for one logical task submission; retained for 24 hours per account and bound to both the submitting API key and normalized request fingerprint. A sibling key receives 409 without the original task ID.
-      schema:
-        type: string
-        minLength: 1
-        maxLength: 128
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: sk-spicy-<48 lowercase hex characters>
       description: 'Send `Authorization: Bearer sk-spicy-...`. Keep keys server-side.'
-x-refined-from:
-- spicyapi-openapi.yaml
-- spicyapi-openapi.yml
