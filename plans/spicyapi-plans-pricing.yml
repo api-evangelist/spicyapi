@@ -13,3 +13,15 @@ plans:
   description: Per-model usage pricing across 153 models; credit balance topped up on the console Billing page.
   features: [Free price quotes (quoteTask), Browsing models and prices is free]
   limits: []
+x-canonical:
+  generated: '2026-10-18'
+  vocabulary: all/0-working/economics/plans-canonical.yml
+  models: []
+  units: []
+  plans:
+  - name: Pay as you go
+    access: other
+    model: unstated
+    model_how: derived
+    units: []
+    periods: []
