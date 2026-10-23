@@ -5,10 +5,17 @@
       "source": "https://spicyapi.ai/blog",
       "feed_url": "https://spicyapi.ai/blog/feed.xml",
       "title": "",
-      "saved": 30,
+      "saved": 0,
       "method": "discovered"
+    },
+    {
+      "source": "https://spicyapi.ai/blog/feed.xml",
+      "feed_url": "https://spicyapi.ai/blog/feed.xml",
+      "title": "",
+      "saved": 0,
+      "method": "feed"
     }
   ],
-  "post_count": 30,
-  "fetched": "2026-10-10T13:15:00Z"
+  "post_count": 52,
+  "fetched": "2026-10-17T14:53:57Z"
 }
